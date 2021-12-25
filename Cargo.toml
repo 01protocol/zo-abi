@@ -1,0 +1,11 @@
+[package]
+name = "zo-abi"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+no-entrypoint = []
+default = ["no-entrypoint"]
+
+[dependencies]
+anchor-lang = "0.19.0"
