@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 
 pub mod dex;
+pub mod events;
 mod types;
 
 pub use crate::types::*;
