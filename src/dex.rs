@@ -1,5 +1,6 @@
 use anchor_lang::prelude::{declare_id, Pubkey};
-use std::mem::{size_of, transmute};
+use bytemuck::{Pod, PodCastError, Zeroable};
+use std::mem::size_of;
 
 declare_id!("CX8xiCu9uBrLX5v3DSeHX5SEvGT36PSExES2LmzVcyJd");
 
@@ -16,6 +17,16 @@ pub enum AccountFlag {
     Disabled = 1u64 << 7,
     Closed = 1u64 << 8,
     Permissioned = 1u64 << 9,
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(u8)]
+pub enum EventFlag {
+    Fill = 0x1,
+    Out = 0x2,
+    Bid = 0x4,
+    Maker = 0x8,
+    ReleaseFunds = 0x10,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -48,15 +59,8 @@ pub struct ZoDexMarket {
     _tail_pad: [u8; 7],
 }
 
-#[derive(Copy, Clone, Debug)]
-#[repr(u8)]
-pub enum EventFlag {
-    Fill = 0x1,
-    Out = 0x2,
-    Bid = 0x4,
-    Maker = 0x8,
-    ReleaseFunds = 0x10,
-}
+unsafe impl Zeroable for ZoDexMarket {}
+unsafe impl Pod for ZoDexMarket {}
 
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
@@ -68,6 +72,9 @@ pub struct EventQueueHeader {
     pub count: u64,
     pub seq_num: u64,
 }
+
+unsafe impl Zeroable for EventQueueHeader {}
+unsafe impl Pod for EventQueueHeader {}
 
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
@@ -86,99 +93,108 @@ pub struct Event {
     pub client_order_id: u64,
 }
 
+unsafe impl Zeroable for Event {}
+unsafe impl Pod for Event {}
+
 impl ZoDexMarket {
-    const SIZE: usize = size_of::<Self>();
-    const FLAGS: u64 = (AccountFlag::Initialized as u64)
-        | (AccountFlag::Market as u64)
-        | (AccountFlag::Permissioned as u64);
+    pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
+        const FLAGS: u64 = (AccountFlag::Initialized as u64)
+            | (AccountFlag::Market as u64)
+            | (AccountFlag::Permissioned as u64);
 
-    pub fn deserialize(buf: &[u8]) -> Self {
-        let buf: [u8; Self::SIZE] =
-            buf.try_into().expect("Invalid buffer length");
+        let r: &Self = bytemuck::try_from_bytes(buf)?;
 
-        unsafe {
-            let r: Self = transmute(buf);
-
-            // SAFETY: Ensure the decoded account is valid.
-            if r._head_pad[..] != *"serum".as_bytes()
-                || r._tail_pad[..] != *"padding".as_bytes()
-                || r.account_flags != Self::FLAGS
-            {
-                panic!("Invalid buffer for market");
-            }
-
-            r
+        if r._head_pad[..] != *"serum".as_bytes()
+            || r._tail_pad[..] != *"padding".as_bytes()
+            || r.account_flags != FLAGS
+        {
+            panic!("Invalid buffer for market");
         }
+
+        Ok(r)
     }
 }
 
 impl EventQueueHeader {
-    const SIZE: usize = size_of::<Self>();
-    const FLAGS: u64 =
-        (AccountFlag::Initialized as u64) | (AccountFlag::EventQueue as u64);
+    pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
+        const FLAGS: u64 = (AccountFlag::Initialized as u64)
+            | (AccountFlag::EventQueue as u64);
 
-    pub fn deserialize(buf: &[u8]) -> Self {
-        let buf: [u8; Self::SIZE] =
-            buf.try_into().expect("Invalid buffer length");
+        let r: &Self = bytemuck::try_from_bytes(buf)?;
 
-        unsafe {
-            let r: Self = transmute(buf);
-
-            // SAFETY: Ensure decoded account is valid.
-            if r._head_pad[..] != *"serum".as_bytes()
-                || r.account_flags != Self::FLAGS
-            {
-                panic!("Invalid buffer for market");
-            }
-
-            r
+        if r._head_pad[..] != *"serum".as_bytes() || r.account_flags != FLAGS {
+            panic!("Invalid buffer for event queue header");
         }
+
+        Ok(r)
     }
 }
 
 impl Event {
-    const SIZE: usize = size_of::<Self>();
+    pub fn split(buf: &[u8]) -> Result<(&EventQueueHeader, &[Self]), PodCastError> {
+        let (header, body) = buf.split_at(size_of::<EventQueueHeader>());
+
+        if body[(body.len() - 7)..] != *"padding".as_bytes() {
+            panic!("Invalid buffer for event queue");
+        }
+
+        let header = EventQueueHeader::deserialize(header)?;
+
+        // Omit slop and padding at the end.
+        let body = &body[..(body.len() - body.len() % size_of::<Self>())];
+        let body: &[Self] = bytemuck::try_cast_slice(body)?;
+
+        Ok((header, body))
+    }
+
+    pub fn deserialize_queue(
+        buf: &[u8],
+    ) -> Result<
+        (&EventQueueHeader, impl Iterator<Item = &Self> + '_),
+        PodCastError,
+    > {
+        let (header, body) = Self::split(buf)?;
+
+        let (tail, head) = body.split_at(header.head as usize);
+        let head_len = head.len().min(header.count as usize);
+        let tail_len = header.count as usize - head_len;
+
+        let head = &head[..head_len];
+        let tail = &tail[..tail_len];
+
+        Ok((header, head.iter().chain(tail.iter())))
+    }
 
     /// Iterator over sequence number and Events. Also
     /// return the new seq_num.
-    pub fn deserialize_since<'a>(
-        buf: &'a [u8],
+    pub fn deserialize_since(
+        buf: &[u8],
         last_seq_num: u64,
-    ) -> (impl Iterator<Item = (u64, Self)> + 'a, u64) {
-        let head =
-            EventQueueHeader::deserialize(&buf[..EventQueueHeader::SIZE]);
-        let buf: &'a _ = &buf[EventQueueHeader::SIZE..];
-        let len = (buf.len() / Self::SIZE) as u64;
+    ) -> Result<(impl Iterator<Item = (u64, &Self)> + '_, u64), PodCastError>
+    {
+        let (header, body) = Self::split(buf)?;
+        let len = body.len() as u64;
 
         const MOD32: u64 = 1u64 << 32;
 
-        let mut missed = (MOD32 + head.seq_num - last_seq_num) % MOD32;
+        let mut missed = (MOD32 + header.seq_num - last_seq_num) % MOD32;
         if missed > len {
             missed = len - 1;
         }
 
-        let start_seq = (MOD32 + head.seq_num - missed) % MOD32;
-        let end = (head.head + head.count) % len;
+        let start_seq = (MOD32 + header.seq_num - missed) % MOD32;
+        let end = (header.head + header.count) % len;
         let start = (len + end - missed) % len;
 
-        (
+        Ok((
             (0u64..missed).map(move |i| {
-                let j = ((start + i) % len) as usize;
-                let j = j * Self::SIZE;
-
                 let seq = (start_seq + i) % MOD32;
+                let j = ((start + i) % len) as usize;
 
-                let ev: [u8; Self::SIZE] = (&buf[j..(j + Self::SIZE)])
-                    .try_into()
-                    .expect("Invalid buffer length");
-
-                unsafe {
-                    let ev: Self = transmute(ev);
-                    (seq, ev)
-                }
+                (seq, &body[j])
             }),
-            head.seq_num % MOD32,
-        )
+            header.seq_num % MOD32,
+        ))
     }
 
     pub fn is_fill(&self) -> bool {
