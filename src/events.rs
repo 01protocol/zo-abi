@@ -36,6 +36,11 @@ pub struct BankruptcyLog {
     pub socialized_loss: i64,
 }
 
+#[event]
+pub struct CacheOracleNoops {
+    pub symbols: Vec<String>,
+}
+
 // == DEX ==
 #[event]
 pub struct RealizedPnlLog {
