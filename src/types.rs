@@ -1,6 +1,14 @@
 use anchor_lang::prelude::*;
 
-#[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone)]
+use fixed::types::I80F48;
+
+pub const SPOT_INITIAL_MARGIN_REQ: u64 = 1_100_000; // multiplied by 1_000, to save compute units
+pub const SPOT_MAINT_MARGIN_REQ: u64 = 1_030_000;
+pub const DUST_THRESHOLD: i64 = 1_000_000; // in smol USD
+pub const MAX_COLLATERALS: u64 = 25;
+pub const MAX_MARKETS: u64 = 50;
+
+#[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Symbol {
     data: [u8; 24],
 }
@@ -27,9 +35,41 @@ impl From<&Symbol> for String {
     }
 }
 
-#[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone)]
+pub enum FractionType {
+    Maintenance,
+    Initial,
+    Cancel,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone, PartialEq)]
+pub enum OrderType {
+    Limit = 0,
+    ImmediateOrCancel = 1,
+    PostOnly = 2,
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WrappedI80F48 {
     pub data: i128,
+}
+
+impl WrappedI80F48 {
+    pub fn zero() -> Self {
+        Self::from(I80F48::ZERO)
+    }
+}
+
+impl From<I80F48> for WrappedI80F48 {
+    fn from(i: I80F48) -> Self {
+        Self { data: i.to_bits() }
+    }
+}
+
+impl From<WrappedI80F48> for I80F48 {
+    fn from(i: WrappedI80F48) -> Self {
+        Self::from_bits(i.data)
+    }
 }
 
 #[zero_copy]
@@ -46,6 +86,12 @@ pub struct CollateralInfo {
     pub og_fee: u16,       // in bps
     pub is_swappable: bool,
     pub serum_open_orders: Pubkey,
+}
+
+impl CollateralInfo {
+    pub fn is_empty(&self) -> bool {
+        self.mint == Pubkey::default()
+    }
 }
 
 #[zero_copy]
