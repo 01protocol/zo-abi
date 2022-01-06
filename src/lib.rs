@@ -9,6 +9,11 @@ use anchor_lang::prelude::*;
 
 declare_id!("DuSPvazsfthvWRuJ8TUs984VXCeUfJ1qbzd8NwkRLEpd");
 
+pub mod serum {
+    use super::*;
+    declare_id!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
+}
+
 #[program]
 pub mod zo_abi {
     use super::*;
