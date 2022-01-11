@@ -7,16 +7,35 @@ mod types;
 pub use crate::types::*;
 use anchor_lang::prelude::*;
 
+// Devnet
 declare_id!("DuSPvazsfthvWRuJ8TUs984VXCeUfJ1qbzd8NwkRLEpd");
 
 pub mod serum {
     use super::*;
+    // Devnet
     declare_id!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
 }
 
 #[program]
 pub mod zo_abi {
     use super::*;
+
+    pub fn create_margin(
+        cx: Context<CreateMargin>,
+        margin_nonce: u8
+    ) -> ProgramResult { Ok(()) }
+
+    pub fn deposit(
+        cx: Context<Deposit>,
+        repay_only: bool,
+        amount: u64
+    ) -> ProgramResult { Ok(()) }
+
+    pub fn withdraw(
+        cx: Context<Withdraw>,
+        allow_borrow: bool,
+        amount: u64
+    ) -> ProgramResult { Ok(()) }
 
     pub fn update_perp_funding(
         cx: Context<UpdatePerpFunding>,
@@ -98,6 +117,62 @@ pub mod zo_abi {
     ) -> ProgramResult {
         Ok(())
     }
+}
+
+#[derive(Accounts)]
+pub struct CreateMargin<'info> {
+    pub state: AccountInfo<'info>,
+    pub authority: Signer<'info>,
+    /// Must be an uninitialized Keypair with
+    /// ` seeds = [authority.key.as_ref(), state.key().as_ref(), b"marginv1".as_ref()] `
+    #[account(mut)]
+    pub margin: AccountInfo<'info>,
+    /// The control account must be created as a pre-instruction, with the correct size, and with
+    /// the zo program as the owner. Current size is 8 + 4482
+    #[account(zero)]
+    pub control: AccountInfo<'info>,
+    pub rent: AccountInfo<'info>,
+    pub system_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct Deposit<'info> {
+    pub state: AccountInfo<'info>,
+    /// ` seeds = [state.key().as_ref()] `
+    pub state_signer: AccountInfo<'info>,
+    #[account(mut)]
+    pub cache: AccountInfo<'info>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub margin: AccountInfo<'info>,
+    #[account(mut)]
+    pub token_account: AccountInfo<'info>,
+    /// Vault pubkey can be found from the State account
+    #[account(mut)]
+    pub vault: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub state: AccountInfo<'info>,
+    /// ` seeds = [state.key().as_ref()] `
+    #[account(mut)]
+    pub state_signer: AccountInfo<'info>,
+    #[account(mut)]
+    pub cache: AccountInfo<'info>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub margin: AccountInfo<'info>,
+    #[account(mut)]
+    pub control: AccountInfo<'info>,
+    #[account(mut)]
+    pub token_account: AccountInfo<'info>,
+    /// Vault pubkey can be found from the State account
+    #[account(mut)]
+    pub vault: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
