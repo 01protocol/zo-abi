@@ -20,6 +20,8 @@ pub mod serum {
 pub mod zo_abi {
     use super::*;
 
+    // ========== MARGIN ==========
+
     pub fn create_margin(
         cx: Context<CreateMargin>,
         margin_nonce: u8
@@ -36,6 +38,67 @@ pub mod zo_abi {
         allow_borrow: bool,
         amount: u64
     ) -> ProgramResult { Ok(()) }
+
+    // ========== TRADING ==========
+
+    /// Creates a trader's open orders account for a given market
+    pub fn create_perp_open_orders(
+        cx: Context<CreatePerpOpenOrders>
+    ) -> ProgramResult {Ok(())}
+
+    /// Places a new order
+    pub fn place_perp_order(
+        cx: Context<PlacePerpOrder>,
+        is_long: bool,
+        limit_price: u64,
+        max_base_quantity: u64,
+        max_quote_quantity: u64,
+        order_type: OrderType,
+        limit: u16,
+        client_id: u64,
+    ) -> ProgramResult {
+        Ok(())
+    }
+
+    /// Cancels an order on the book
+    pub fn cancel_perp_order(
+        cx: Context<CancelPerpOrder>,
+        order_id: u128,
+        is_long: bool,
+    ) -> ProgramResult {
+        Ok(())
+    }
+
+    /// Cancels an order on the book by client id
+    pub fn cancel_perp_order_by_client_id(
+        cx: Context<CancelPerpOrderByClientId>,
+        client_id: u64,
+    ) -> ProgramResult {
+        Ok(())
+    }
+
+    /// Settles unrealized funding and realized pnl into the margin account
+    pub fn settle_funds(cx: Context<SettleFunds>) -> ProgramResult {
+       Ok(())
+    }
+
+    /// Swaps two tokens on a single A/B market, where A is the base currency
+    /// and B is the quote currency. This is just a direct IOC trade that
+    /// instantly settles.
+    ///
+    /// When side is "bid", then swaps B for A. When side is "ask", then swaps
+    /// A for B.
+    pub fn swap(
+        cx: Context<Swap>,
+        buy: bool,
+        allow_borrow: bool, // whether the withdraw currency can go below 0
+        amount: u64, // smol amount to swap *from*
+        min_rate: u64,  // number of smol tokens received from a single big token given
+    ) -> ProgramResult {
+        Ok(())
+    }
+
+    // ========== KEEPERS ==========
 
     pub fn update_perp_funding(
         cx: Context<UpdatePerpFunding>,
@@ -70,6 +133,9 @@ pub mod zo_abi {
         Ok(())
     }
 
+    // ========== LIQUIDATION ==========
+
+    /// Force cancels all orders of an account under liquidation
     pub fn force_cancel_all_perp_orders(
         cx: Context<ForceCancelAllPerpOrders>,
         limit: u16,
@@ -77,6 +143,7 @@ pub mod zo_abi {
         Ok(())
     }
 
+    /// Liquidates a perp position by transferring it from the liqee to the liqor
     pub fn liquidate_perp_position(
         cx: Context<LiquidatePerpPosition>,
         asset_transfer_lots: u64,
@@ -84,6 +151,7 @@ pub mod zo_abi {
         Ok(())
     }
 
+    /// Liquidates a spot position by transferring it from the liqee to the liqor
     pub fn liquidate_spot_position(
         cx: Context<LiquidateSpotPosition>,
         asset_transfer_amount: i64,
@@ -91,32 +159,94 @@ pub mod zo_abi {
         Ok(())
     }
 
-    pub fn place_perp_order(
-        cx: Context<PlacePerpOrder>,
-        is_long: bool,
-        limit_price: u64,
-        max_base_quantity: u64,
-        max_quote_quantity: u64,
-        order_type: OrderType,
-        limit: u16,
-        client_id: u64,
-    ) -> ProgramResult {
-        Ok(())
-    }
-
+    /// Transfer negative borrows from liqee to liqor, and subsidize through insurance fund
     pub fn settle_bankruptcy(cx: Context<SettleBankruptcy>) -> ProgramResult {
         Ok(())
     }
+}
 
-    pub fn swap(
-        cx: Context<Swap>,
-        buy: bool,
-        allow_borrow: bool, // whether the withdraw currency can go below 0
-        amount: u64,
-        min_rate: u64,
-    ) -> ProgramResult {
-        Ok(())
-    }
+#[derive(Accounts)]
+pub struct SettleFunds<'info> {
+    pub authority: Signer<'info>,
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CancelPerpOrderByClientId<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_bids: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_asks: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub event_q: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CancelPerpOrder<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_bids: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_asks: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub event_q: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CreatePerpOpenOrders<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
