@@ -236,6 +236,8 @@ pub struct CreatePerpOpenOrders<'info> {
     #[account(mut)]
     pub state_signer: UncheckedAccount<'info>,
     pub authority: Signer<'info>,
+    // if authority is a pda, use a non-pda as payer
+    pub payer: Signer<'info>,
     #[account(mut)]
     pub margin: AccountLoader<'info, Margin>,
     #[account(mut)]
@@ -253,6 +255,8 @@ pub struct CreatePerpOpenOrders<'info> {
 pub struct CreateMargin<'info> {
     pub state: AccountInfo<'info>,
     pub authority: Signer<'info>,
+    // if authority is a pda, use a non-pda as payer
+    pub payer: Signer<'info>,
     /// Must be an uninitialized Keypair with
     /// ` seeds = [authority.key.as_ref(), state.key().as_ref(), b"marginv1".as_ref()] `
     #[account(mut)]
