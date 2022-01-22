@@ -7,12 +7,17 @@ mod types;
 pub use crate::types::*;
 use anchor_lang::prelude::*;
 
-// Devnet
+// NOTE: Listed IDs are for devnet.
+
 declare_id!("DuSPvazsfthvWRuJ8TUs984VXCeUfJ1qbzd8NwkRLEpd");
+
+pub mod state {
+    use super::*;
+    declare_id!("HAdeMzG1ZuzhWnt26iyggLhYUen3YosXiD5sgDXJoNDY");
+}
 
 pub mod serum {
     use super::*;
-    // Devnet
     declare_id!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
 }
 
