@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added `payer` to `create_margin` and `create_perp_order` ([#3](https://github.com/01protocol/zo-abi/pull/3))
 - Added `create_perp_open_orders`, `cancel_perp_order`, `cancel_perp_order_by_client_id`, `settle_funds` instructions
 - Added `DepositLog`, `WithdrawLog` events
 
