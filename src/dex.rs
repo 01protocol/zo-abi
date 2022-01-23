@@ -1,8 +1,6 @@
-use anchor_lang::prelude::{declare_id, Pubkey};
+use anchor_lang::prelude::Pubkey;
 use bytemuck::{Pod, PodCastError, Zeroable};
 use std::mem::size_of;
-
-declare_id!("CX8xiCu9uBrLX5v3DSeHX5SEvGT36PSExES2LmzVcyJd");
 
 #[derive(Copy, Clone, Debug)]
 #[repr(u64)]
@@ -131,7 +129,9 @@ impl EventQueueHeader {
 }
 
 impl Event {
-    pub fn split(buf: &[u8]) -> Result<(&EventQueueHeader, &[Self]), PodCastError> {
+    pub fn split(
+        buf: &[u8],
+    ) -> Result<(&EventQueueHeader, &[Self]), PodCastError> {
         let (header, body) = buf.split_at(size_of::<EventQueueHeader>());
 
         if body[(body.len() - 7)..] != *"padding".as_bytes() {

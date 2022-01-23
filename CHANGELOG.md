@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ReduceOnlyIoc` and `ReduceOnlyLimit` to `OrderType`
 - BREAKING: Added `payer` to `create_margin` and `create_perp_order` ([#3](https://github.com/01protocol/zo-abi/pull/3))
 - BREAKING: Bumped `anchor-lang` to `v0.20.1`
+- BREAKING: Renamed `dex::ID`, `serum::ID`, `state::ID` to `ZO_DEX_PID`, `SERUM_DEX_PID`, `ZO_STATE_ID`
 
 ## [0.1.0] - 2021-01-10
 

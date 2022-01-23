@@ -1290,4 +1290,5 @@ dependencies = [
  "anchor-lang",
  "bytemuck",
  "fixed",
+ "solana-program",
 ]

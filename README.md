@@ -94,10 +94,10 @@ fn main() {
     let program = client.program(zo::ID);
 
     // Loading a program account.
-    let zo_state: zo::State = program.account(zo::state::ID).unwrap();
+    let zo_state: zo::State = program.account(zo::STATE_ID).unwrap();
     let zo_cache: zo::Cache = program.account(zo_state.cache).unwrap();
 
-    let (zo_state_signer, _) = Pubkey::find_program_address(&[zo::state::ID.as_ref()], &zo::ID);
+    let (zo_state_signer, _) = Pubkey::find_program_address(&[zo::STATE_ID.as_ref()], &zo::ID);
 
     // Calling an instruction.
     program
@@ -108,7 +108,7 @@ fn main() {
         })
         .accounts(zo::accounts::Deposit {
             authority: program.payer(),
-            state: zo::state::ID,
+            state: zo::STATE_ID,
             state_signer: zo_state_signer,
             cache: zo_state.cache,
             token_program: spl_token::ID,

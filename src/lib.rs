@@ -1,58 +1,68 @@
-#![allow(unused_variables)]
+mod types;
+use anchor_lang::prelude::*;
+use solana_program::pubkey;
 
 pub mod dex;
 pub mod events;
-mod types;
-
 pub use crate::types::*;
-use anchor_lang::prelude::*;
 
 // NOTE: Listed IDs are for devnet.
 
 declare_id!("DuSPvazsfthvWRuJ8TUs984VXCeUfJ1qbzd8NwkRLEpd");
 
-pub mod state {
-    use super::*;
-    declare_id!("HAdeMzG1ZuzhWnt26iyggLhYUen3YosXiD5sgDXJoNDY");
-}
+pub static ZO_DEX_PID: Pubkey =
+    pubkey!("CX8xiCu9uBrLX5v3DSeHX5SEvGT36PSExES2LmzVcyJd");
 
-pub mod serum {
-    use super::*;
-    declare_id!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
-}
+pub static SERUM_DEX_PID: Pubkey =
+    pubkey!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
+
+pub static ZO_STATE_ID: Pubkey =
+    pubkey!("HAdeMzG1ZuzhWnt26iyggLhYUen3YosXiD5sgDXJoNDY");
 
 #[program]
-pub mod zo_abi {
+mod zo_abi {
+    #![allow(dead_code)]
+    #![allow(unused_variables)]
+    #![allow(clippy::too_many_arguments)]
+
     use super::*;
 
     // ========== MARGIN ==========
 
-    pub fn create_margin(
+    pub(crate) fn create_margin(
         cx: Context<CreateMargin>,
-        margin_nonce: u8
-    ) -> ProgramResult { Ok(()) }
+        margin_nonce: u8,
+    ) -> ProgramResult {
+        Ok(())
+    }
 
-    pub fn deposit(
+    pub(crate) fn deposit(
         cx: Context<Deposit>,
         repay_only: bool,
-        amount: u64
-    ) -> ProgramResult { Ok(()) }
+        amount: u64,
+    ) -> ProgramResult {
+        Ok(())
+    }
 
-    pub fn withdraw(
+    pub(crate) fn withdraw(
         cx: Context<Withdraw>,
         allow_borrow: bool,
-        amount: u64
-    ) -> ProgramResult { Ok(()) }
+        amount: u64,
+    ) -> ProgramResult {
+        Ok(())
+    }
 
     // ========== TRADING ==========
 
     /// Creates a trader's open orders account for a given market
-    pub fn create_perp_open_orders(
-        cx: Context<CreatePerpOpenOrders>
-    ) -> ProgramResult {Ok(())}
+    pub(crate) fn create_perp_open_orders(
+        cx: Context<CreatePerpOpenOrders>,
+    ) -> ProgramResult {
+        Ok(())
+    }
 
     /// Places a new order
-    pub fn place_perp_order(
+    pub(crate) fn place_perp_order(
         cx: Context<PlacePerpOrder>,
         is_long: bool,
         limit_price: u64,
@@ -66,7 +76,7 @@ pub mod zo_abi {
     }
 
     /// Cancels an order on the book
-    pub fn cancel_perp_order(
+    pub(crate) fn cancel_perp_order(
         cx: Context<CancelPerpOrder>,
         order_id: u128,
         is_long: bool,
@@ -75,7 +85,7 @@ pub mod zo_abi {
     }
 
     /// Cancels an order on the book by client id
-    pub fn cancel_perp_order_by_client_id(
+    pub(crate) fn cancel_perp_order_by_client_id(
         cx: Context<CancelPerpOrderByClientId>,
         client_id: u64,
     ) -> ProgramResult {
@@ -83,8 +93,8 @@ pub mod zo_abi {
     }
 
     /// Settles unrealized funding and realized pnl into the margin account
-    pub fn settle_funds(cx: Context<SettleFunds>) -> ProgramResult {
-       Ok(())
+    pub(crate) fn settle_funds(cx: Context<SettleFunds>) -> ProgramResult {
+        Ok(())
     }
 
     /// Swaps two tokens on a single A/B market, where A is the base currency
@@ -93,25 +103,25 @@ pub mod zo_abi {
     ///
     /// When side is "bid", then swaps B for A. When side is "ask", then swaps
     /// A for B.
-    pub fn swap(
+    pub(crate) fn swap(
         cx: Context<Swap>,
         buy: bool,
         allow_borrow: bool, // whether the withdraw currency can go below 0
-        amount: u64, // smol amount to swap *from*
-        min_rate: u64,  // number of smol tokens received from a single big token given
+        amount: u64,        // smol amount to swap *from*
+        min_rate: u64, // number of smol tokens received from a single big token given
     ) -> ProgramResult {
         Ok(())
     }
 
     // ========== KEEPERS ==========
 
-    pub fn update_perp_funding(
+    pub(crate) fn update_perp_funding(
         cx: Context<UpdatePerpFunding>,
     ) -> ProgramResult {
         Ok(())
     }
 
-    pub fn cache_oracle(
+    pub(crate) fn cache_oracle(
         cx: Context<CacheOracle>,
         symbols: Vec<String>,
         mock_prices: Option<Vec<Option<u64>>>,
@@ -119,7 +129,7 @@ pub mod zo_abi {
         Ok(())
     }
 
-    pub fn cache_interest_rates(
+    pub(crate) fn cache_interest_rates(
         cx: Context<CacheInterestRates>,
         start: u8,
         end: u8,
@@ -127,21 +137,21 @@ pub mod zo_abi {
         Ok(())
     }
 
-    pub fn consume_events(
+    pub(crate) fn consume_events(
         cx: Context<ConsumeEvents>,
         limit: u16,
     ) -> ProgramResult {
         Ok(())
     }
 
-    pub fn crank_pnl(cx: Context<CrankPnl>) -> ProgramResult {
+    pub(crate) fn crank_pnl(cx: Context<CrankPnl>) -> ProgramResult {
         Ok(())
     }
 
     // ========== LIQUIDATION ==========
 
     /// Force cancels all orders of an account under liquidation
-    pub fn force_cancel_all_perp_orders(
+    pub(crate) fn force_cancel_all_perp_orders(
         cx: Context<ForceCancelAllPerpOrders>,
         limit: u16,
     ) -> ProgramResult {
@@ -149,7 +159,7 @@ pub mod zo_abi {
     }
 
     /// Liquidates a perp position by transferring it from the liqee to the liqor
-    pub fn liquidate_perp_position(
+    pub(crate) fn liquidate_perp_position(
         cx: Context<LiquidatePerpPosition>,
         asset_transfer_lots: u64,
     ) -> ProgramResult {
@@ -157,7 +167,7 @@ pub mod zo_abi {
     }
 
     /// Liquidates a spot position by transferring it from the liqee to the liqor
-    pub fn liquidate_spot_position(
+    pub(crate) fn liquidate_spot_position(
         cx: Context<LiquidateSpotPosition>,
         asset_transfer_amount: i64,
     ) -> ProgramResult {
@@ -165,13 +175,15 @@ pub mod zo_abi {
     }
 
     /// Transfer negative borrows from liqee to liqor, and subsidize through insurance fund
-    pub fn settle_bankruptcy(cx: Context<SettleBankruptcy>) -> ProgramResult {
+    pub(crate) fn settle_bankruptcy(
+        cx: Context<SettleBankruptcy>,
+    ) -> ProgramResult {
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct SettleFunds<'info> {
+struct SettleFunds<'info> {
     pub authority: Signer<'info>,
     pub state: AccountLoader<'info, State>,
     #[account(mut)]
@@ -190,7 +202,7 @@ pub struct SettleFunds<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CancelPerpOrderByClientId<'info> {
+struct CancelPerpOrderByClientId<'info> {
     pub state: AccountLoader<'info, State>,
     #[account(mut)]
     pub cache: AccountLoader<'info, Cache>,
@@ -213,7 +225,7 @@ pub struct CancelPerpOrderByClientId<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CancelPerpOrder<'info> {
+struct CancelPerpOrder<'info> {
     pub state: AccountLoader<'info, State>,
     #[account(mut)]
     pub cache: AccountLoader<'info, Cache>,
@@ -236,7 +248,7 @@ pub struct CancelPerpOrder<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CreatePerpOpenOrders<'info> {
+struct CreatePerpOpenOrders<'info> {
     pub state: AccountLoader<'info, State>,
     #[account(mut)]
     pub state_signer: UncheckedAccount<'info>,
@@ -257,7 +269,7 @@ pub struct CreatePerpOpenOrders<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CreateMargin<'info> {
+struct CreateMargin<'info> {
     pub state: AccountInfo<'info>,
     pub authority: Signer<'info>,
     // if authority is a pda, use a non-pda as payer
@@ -275,7 +287,7 @@ pub struct CreateMargin<'info> {
 }
 
 #[derive(Accounts)]
-pub struct Deposit<'info> {
+struct Deposit<'info> {
     pub state: AccountInfo<'info>,
     /// ` seeds = [state.key().as_ref()] `
     pub state_signer: AccountInfo<'info>,
@@ -293,7 +305,7 @@ pub struct Deposit<'info> {
 }
 
 #[derive(Accounts)]
-pub struct Withdraw<'info> {
+struct Withdraw<'info> {
     #[account(mut)]
     pub state: AccountInfo<'info>,
     /// ` seeds = [state.key().as_ref()] `
@@ -315,7 +327,7 @@ pub struct Withdraw<'info> {
 }
 
 #[derive(Accounts)]
-pub struct UpdatePerpFunding<'info> {
+struct UpdatePerpFunding<'info> {
     pub state: AccountInfo<'info>,
     #[account(mut)]
     pub state_signer: AccountInfo<'info>,
@@ -327,21 +339,21 @@ pub struct UpdatePerpFunding<'info> {
     pub market_bids: AccountInfo<'info>,
     #[account(mut)]
     pub market_asks: AccountInfo<'info>,
-    #[account(address = dex::ID)]
+    #[account(address = ZO_DEX_PID)]
     pub dex_program: AccountInfo<'info>,
 }
 
 /// Price info accounts are passed in remaining
 /// accounts array.
 #[derive(Accounts)]
-pub struct CacheOracle<'info> {
+struct CacheOracle<'info> {
     pub signer: Signer<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct CacheInterestRates<'info> {
+struct CacheInterestRates<'info> {
     pub signer: Signer<'info>,
     pub state: AccountInfo<'info>,
     #[account(mut)]
@@ -349,7 +361,7 @@ pub struct CacheInterestRates<'info> {
 }
 
 #[derive(Accounts)]
-pub struct ConsumeEvents<'info> {
+struct ConsumeEvents<'info> {
     #[account(mut)]
     pub state: AccountInfo<'info>,
     #[account(mut)]
@@ -363,7 +375,7 @@ pub struct ConsumeEvents<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CrankPnl<'info> {
+struct CrankPnl<'info> {
     pub state: AccountInfo<'info>,
     #[account(mut)]
     pub state_signer: AccountInfo<'info>,
@@ -376,7 +388,7 @@ pub struct CrankPnl<'info> {
 }
 
 #[derive(Accounts)]
-pub struct ForceCancelAllPerpOrders<'info> {
+struct ForceCancelAllPerpOrders<'info> {
     pub pruner: Signer<'info>,
     pub state: AccountInfo<'info>,
     #[account(mut)]
@@ -399,12 +411,12 @@ pub struct ForceCancelAllPerpOrders<'info> {
     pub market_bids: AccountInfo<'info>,
     #[account(mut)]
     pub market_asks: AccountInfo<'info>,
-    #[account(address = dex::ID)]
+    #[account(address = ZO_DEX_PID)]
     pub dex_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct LiquidatePerpPosition<'info> {
+struct LiquidatePerpPosition<'info> {
     pub state: AccountInfo<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
@@ -434,12 +446,12 @@ pub struct LiquidatePerpPosition<'info> {
     pub market_bids: AccountInfo<'info>,
     #[account(mut)]
     pub market_asks: AccountInfo<'info>,
-    #[account(address = dex::ID)]
+    #[account(address = ZO_DEX_PID)]
     pub dex_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct LiquidateSpotPosition<'info> {
+struct LiquidateSpotPosition<'info> {
     pub state: AccountInfo<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
@@ -457,7 +469,7 @@ pub struct LiquidateSpotPosition<'info> {
 }
 
 #[derive(Accounts)]
-pub struct PlacePerpOrder<'info> {
+struct PlacePerpOrder<'info> {
     pub state: AccountInfo<'info>,
     #[account(mut)]
     pub state_signer: AccountInfo<'info>,
@@ -480,13 +492,13 @@ pub struct PlacePerpOrder<'info> {
     pub market_bids: AccountInfo<'info>,
     #[account(mut)]
     pub market_asks: AccountInfo<'info>,
-    #[account(address = dex::ID)]
+    #[account(address = ZO_DEX_PID)]
     pub dex_program: AccountInfo<'info>,
     pub rent: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct SettleBankruptcy<'info> {
+struct SettleBankruptcy<'info> {
     #[account(mut)]
     pub state: AccountInfo<'info>,
     #[account(mut)]
@@ -506,7 +518,7 @@ pub struct SettleBankruptcy<'info> {
 }
 
 #[derive(Accounts)]
-pub struct Swap<'info> {
+struct Swap<'info> {
     pub authority: Signer<'info>,
     #[account(mut)]
     pub state: AccountInfo<'info>,
@@ -544,6 +556,7 @@ pub struct Swap<'info> {
     #[account(mut)]
     pub serum_pc_vault: AccountInfo<'info>,
     pub serum_vault_signer: AccountInfo<'info>,
+    #[account(address = SERUM_DEX_PID)]
     pub srm_spot_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
     pub rent: AccountInfo<'info>,

@@ -1,14 +1,28 @@
 use anchor_lang::prelude::*;
-
 use fixed::types::I80F48;
 
-pub const SPOT_INITIAL_MARGIN_REQ: u64 = 1_100_000; // multiplied by 1_000, to save compute units
-pub const SPOT_MAINT_MARGIN_REQ: u64 = 1_030_000;
-pub const DUST_THRESHOLD: i64 = 1_000_000; // in smol USD
-pub const MAX_COLLATERALS: u64 = 25;
-pub const MAX_MARKETS: u64 = 50;
+/// Multiplied by 1_000, to save compute units.
+pub const SPOT_INITIAL_MARGIN_REQ: u64 = 1_100_000;
 
-#[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+/// Multiplied by 1_000, to save compute units.
+pub const SPOT_MAINT_MARGIN_REQ: u64 = 1_030_000;
+
+/// In microUSD.
+pub const DUST_THRESHOLD: i64 = 1_000_000;
+
+pub const MAX_COLLATERALS: usize = 25;
+pub const MAX_MARKETS: usize = 50;
+
+#[derive(
+    AnchorDeserialize,
+    AnchorSerialize,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
 pub struct Symbol {
     data: [u8; 24],
 }
@@ -51,7 +65,16 @@ pub enum OrderType {
     ReduceOnlyLimit = 4,
 }
 
-#[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    AnchorDeserialize,
+    AnchorSerialize,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
 pub struct WrappedI80F48 {
     pub data: i128,
 }
@@ -198,8 +221,8 @@ pub struct State {
     pub insurance: u64,          // in smol usd
     pub fees_accrued: [u64; 25], // in smol usd
     pub vaults: [Pubkey; 25],
-    pub collaterals: [CollateralInfo; 25],
-    pub perp_markets: [PerpMarketInfo; 50],
+    pub collaterals: [CollateralInfo; MAX_COLLATERALS],
+    pub perp_markets: [PerpMarketInfo; MAX_MARKETS],
     pub total_collaterals: u16,
     pub total_markets: u16,
 }
@@ -209,24 +232,24 @@ pub struct State {
 pub struct Margin {
     pub nonce: u8,
     pub authority: Pubkey,
-    pub collateral: [WrappedI80F48; 25], // mapped to the state collaterals array, divided by entry ir_index
+    pub collateral: [WrappedI80F48; MAX_COLLATERALS], // mapped to the state collaterals array, divided by entry ir_index
     pub control: Pubkey,
 }
 
 #[account(zero_copy)]
 #[repr(packed)]
 pub struct Cache {
-    pub oracles: [OracleCache; 25],
+    pub oracles: [OracleCache; MAX_COLLATERALS],
     /// Mapped to `State.perp_markets`
-    pub marks: [MarkCache; 50],
-    pub funding_cache: [i128; 50], // long to short
+    pub marks: [MarkCache; MAX_MARKETS],
+    pub funding_cache: [i128; MAX_MARKETS], // long to short
     /// Mapped to 'State.collaterals'
-    pub borrow_cache: [BorrowCache; 25],
+    pub borrow_cache: [BorrowCache; MAX_COLLATERALS],
 }
 
 #[account(zero_copy)]
 #[repr(packed)]
 pub struct Control {
     pub authority: Pubkey,
-    pub open_orders_agg: [OpenOrdersInfo; 50], // index mapped to perp markets on state
+    pub open_orders_agg: [OpenOrdersInfo; MAX_MARKETS], // index mapped to perp markets on state
 }
