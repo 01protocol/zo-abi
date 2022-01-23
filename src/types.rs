@@ -75,6 +75,7 @@ impl From<WrappedI80F48> for I80F48 {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct CollateralInfo {
     pub mint: Pubkey,
     pub oracle_symbol: Symbol,
@@ -97,6 +98,7 @@ impl CollateralInfo {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct PerpMarketInfo {
     pub symbol: Symbol, // Convention ex: "BTC-EVER-C" or "BTC-PERP"
     pub oracle_symbol: Symbol,
@@ -118,6 +120,7 @@ pub enum PerpType {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct OpenOrdersInfo {
     pub key: Pubkey,
     pub native_pc_total: i64,
@@ -130,6 +133,7 @@ pub struct OpenOrdersInfo {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct OracleCache {
     pub symbol: Symbol,
     pub sources: [OracleSource; 2],
@@ -148,12 +152,14 @@ pub enum OracleType {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct OracleSource {
     pub ty: OracleType,
     pub key: Pubkey,
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct MarkCache {
     pub price: WrappedI80F48, // smol usd per smol asset
     // pub twap: [Olhc; 12],
@@ -162,6 +168,7 @@ pub struct MarkCache {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct TwapInfo {
     pub cumul_avg: WrappedI80F48,
     pub open: WrappedI80F48,
@@ -172,6 +179,7 @@ pub struct TwapInfo {
 }
 
 #[zero_copy]
+#[repr(packed)]
 pub struct BorrowCache {
     pub supply: WrappedI80F48,
     pub borrows: WrappedI80F48,
@@ -181,6 +189,7 @@ pub struct BorrowCache {
 }
 
 #[account(zero_copy)]
+#[repr(packed)]
 pub struct State {
     pub signer_nonce: u8,
     pub admin: Pubkey,
@@ -196,6 +205,7 @@ pub struct State {
 }
 
 #[account(zero_copy)]
+#[repr(packed)]
 pub struct Margin {
     pub nonce: u8,
     pub authority: Pubkey,
@@ -204,6 +214,7 @@ pub struct Margin {
 }
 
 #[account(zero_copy)]
+#[repr(packed)]
 pub struct Cache {
     pub oracles: [OracleCache; 25],
     /// Mapped to `State.perp_markets`
@@ -214,6 +225,7 @@ pub struct Cache {
 }
 
 #[account(zero_copy)]
+#[repr(packed)]
 pub struct Control {
     pub authority: Pubkey,
     pub open_orders_agg: [OpenOrdersInfo; 50], // index mapped to perp markets on state
