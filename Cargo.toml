@@ -2,6 +2,12 @@
 name = "zo-abi"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+readme = "README.md"
+description = "01.xyz anchor program interface"
+homepage = "https://github.com/01protocol/zo-abi"
+repository = "https://github.com/01protocol/zo-abi"
+documentation = "https://docs.rs/zo-abi"
 
 [features]
 no-entrypoint = []

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod types;
 use anchor_lang::prelude::*;
 use solana_program::pubkey;

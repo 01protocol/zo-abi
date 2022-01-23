@@ -1,4 +1,4 @@
-# 01 abi 
+# zo-abi
 
 The abi is a repository for interfacing with the 01 program either through a rust client or through CPIs from another Solana program.
 
