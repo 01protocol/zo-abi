@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2021-01-23
+
 - Added `create_perp_open_orders`, `cancel_perp_order`, `cancel_perp_order_by_client_id`, `settle_funds` instructions
 - Added `DepositLog`, `WithdrawLog` events
 - Added `ReduceOnlyIoc` and `ReduceOnlyLimit` to `OrderType`
