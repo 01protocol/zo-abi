@@ -47,6 +47,8 @@ pub enum OrderType {
     Limit = 0,
     ImmediateOrCancel = 1,
     PostOnly = 2,
+    ReduceOnlyIoc = 3,
+    ReduceOnlyLimit = 4,
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
