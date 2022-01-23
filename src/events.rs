@@ -14,6 +14,20 @@ impl fmt::Display for LiquidationEvent {
 }
 
 #[event]
+pub struct DepositLog {
+    pub col_index: u8,
+    pub deposit_amount: u64,
+    pub margin_key: Pubkey,
+}
+
+#[event]
+pub struct WithdrawLog {
+    pub col_index: u8,
+    pub withdraw_amount: u64,
+    pub margin_key: Pubkey,
+}
+
+#[event]
 #[derive(Clone)]
 pub struct LiquidationLog {
     pub liquidation_event: LiquidationEvent,

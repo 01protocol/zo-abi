@@ -5,6 +5,9 @@ edition = "2021"
 
 [features]
 no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
 default = ["no-entrypoint"]
 
 [dependencies]

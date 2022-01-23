@@ -7,12 +7,17 @@ mod types;
 pub use crate::types::*;
 use anchor_lang::prelude::*;
 
-// Devnet
+// NOTE: Listed IDs are for devnet.
+
 declare_id!("DuSPvazsfthvWRuJ8TUs984VXCeUfJ1qbzd8NwkRLEpd");
+
+pub mod state {
+    use super::*;
+    declare_id!("HAdeMzG1ZuzhWnt26iyggLhYUen3YosXiD5sgDXJoNDY");
+}
 
 pub mod serum {
     use super::*;
-    // Devnet
     declare_id!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
 }
 
@@ -236,6 +241,8 @@ pub struct CreatePerpOpenOrders<'info> {
     #[account(mut)]
     pub state_signer: UncheckedAccount<'info>,
     pub authority: Signer<'info>,
+    // if authority is a pda, use a non-pda as payer
+    pub payer: Signer<'info>,
     #[account(mut)]
     pub margin: AccountLoader<'info, Margin>,
     #[account(mut)]
@@ -253,6 +260,8 @@ pub struct CreatePerpOpenOrders<'info> {
 pub struct CreateMargin<'info> {
     pub state: AccountInfo<'info>,
     pub authority: Signer<'info>,
+    // if authority is a pda, use a non-pda as payer
+    pub payer: Signer<'info>,
     /// Must be an uninitialized Keypair with
     /// ` seeds = [authority.key.as_ref(), state.key().as_ref(), b"marginv1".as_ref()] `
     #[account(mut)]
