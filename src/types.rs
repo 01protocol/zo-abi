@@ -12,6 +12,7 @@ pub const DUST_THRESHOLD: i64 = 1_000_000;
 
 pub const MAX_COLLATERALS: usize = 25;
 pub const MAX_MARKETS: usize = 50;
+pub const MAX_ORACLE_SOURCES: usize = 3;
 
 #[derive(
     AnchorDeserialize,
@@ -103,15 +104,24 @@ pub struct CollateralInfo {
     pub mint: Pubkey,
     pub oracle_symbol: Symbol,
     pub decimals: u8,
-    pub weight: u16,  //  in permil
+    pub weight: u16, //  in permil
     pub liq_fee: u16, // in permil
+
+    // borrow lending info
     pub is_borrowable: bool,
     pub optimal_util: u16, // in permil
     pub optimal_rate: u16, // in permil
-    pub max_rate: u16,     // in permil
-    pub og_fee: u16,       // in bps
+    pub max_rate: u16, // in permil
+    pub og_fee: u16, // in bps
+
+    // swap info
     pub is_swappable: bool,
     pub serum_open_orders: Pubkey,
+
+    pub max_deposit: u64,    // in smol
+    pub dust_threshold: u16, // in smol
+
+    _padding: [u8; 384],
 }
 
 impl CollateralInfo {
@@ -123,16 +133,21 @@ impl CollateralInfo {
 #[zero_copy]
 #[repr(packed)]
 pub struct PerpMarketInfo {
+    // info
     pub symbol: Symbol, // Convention ex: "BTC-EVER-C" or "BTC-PERP"
     pub oracle_symbol: Symbol,
     pub perp_type: PerpType,
+    // settings
     pub asset_decimals: u8,
     pub asset_lot_size: u64,
     pub quote_lot_size: u64,
-    pub strike: u64,   // in smolUSD per bigAsset
+    pub strike: u64, // in smolUSD per bigAsset
     pub base_imf: u16, // in permil (i.e. 1% <=> 10 permil)
-    pub liq_fee: u16,  // in permil
+    pub liq_fee: u16, // in permil
+    // zoDex dex keys
     pub dex_market: Pubkey,
+
+    _padding: [u8; 320],
 }
 
 #[derive(Copy, Clone)]
@@ -159,7 +174,7 @@ pub struct OpenOrdersInfo {
 #[repr(packed)]
 pub struct OracleCache {
     pub symbol: Symbol,
-    pub sources: [OracleSource; 2],
+    pub sources: [OracleSource; MAX_ORACLE_SOURCES],
     pub last_updated: u64,
     pub price: WrappedI80F48, // smol quote per smol asset
     pub twap: WrappedI80F48,
@@ -185,7 +200,6 @@ pub struct OracleSource {
 #[repr(packed)]
 pub struct MarkCache {
     pub price: WrappedI80F48, // smol usd per smol asset
-    // pub twap: [Olhc; 12],
     /// Hourly twap sampled every 5min.
     pub twap: TwapInfo,
 }
@@ -204,8 +218,8 @@ pub struct TwapInfo {
 #[zero_copy]
 #[repr(packed)]
 pub struct BorrowCache {
-    pub supply: WrappedI80F48,
-    pub borrows: WrappedI80F48,
+    pub supply: WrappedI80F48, // in smol
+    pub borrows: WrappedI80F48, // in smol
     pub supply_multiplier: WrappedI80F48, // earned interest per asset supplied
     pub borrow_multiplier: WrappedI80F48, // earned interest per asset borrowed
     pub last_updated: u64,
@@ -218,13 +232,18 @@ pub struct State {
     pub admin: Pubkey,
     pub cache: Pubkey,
     pub swap_fee_vault: Pubkey,
-    pub insurance: u64,          // in smol usd
-    pub fees_accrued: [u64; 25], // in smol usd
-    pub vaults: [Pubkey; 25],
+    pub insurance: u64, // in smol usd
+
+    /// Fees accrued through borrow lending
+    pub fees_accrued: [u64; MAX_COLLATERALS], // in smol usd
+    pub vaults: [Pubkey; MAX_COLLATERALS],
     pub collaterals: [CollateralInfo; MAX_COLLATERALS],
     pub perp_markets: [PerpMarketInfo; MAX_MARKETS],
+
     pub total_collaterals: u16,
     pub total_markets: u16,
+
+    _padding: [u8; 1280],
 }
 
 #[account(zero_copy)]
@@ -232,8 +251,11 @@ pub struct State {
 pub struct Margin {
     pub nonce: u8,
     pub authority: Pubkey,
-    pub collateral: [WrappedI80F48; MAX_COLLATERALS], // mapped to the state collaterals array, divided by entry ir_index
+    /// Mapped to the state collaterals array, divided by entry sup or bor_index
+    pub collateral: [WrappedI80F48; MAX_COLLATERALS],
     pub control: Pubkey,
+
+    _padding: [u8; 320],
 }
 
 #[account(zero_copy)]
@@ -251,5 +273,6 @@ pub struct Cache {
 #[repr(packed)]
 pub struct Control {
     pub authority: Pubkey,
-    pub open_orders_agg: [OpenOrdersInfo; MAX_MARKETS], // index mapped to perp markets on state
+    /// Mapped to `State.perp_markets`
+    pub open_orders_agg: [OpenOrdersInfo; MAX_MARKETS],
 }

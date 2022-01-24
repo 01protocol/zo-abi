@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added `devnet` feature flag to switch IDs
+- BREAKING: Updated all IDs, added new `devnet` and `mainnet` instance ones
+- BREAKING: Updated structs for new instance
+
 ## [0.2.0] - 2021-01-23
 
 - Added `create_perp_open_orders`, `cancel_perp_order`, `cancel_perp_order_by_client_id`, `settle_funds` instructions

@@ -10,6 +10,7 @@ repository = "https://github.com/01protocol/zo-abi"
 documentation = "https://docs.rs/zo-abi"
 
 [features]
+devnet = []
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []

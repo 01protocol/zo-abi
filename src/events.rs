@@ -28,6 +28,15 @@ pub struct WithdrawLog {
 }
 
 #[event]
+pub struct SwapLog {
+    pub margin_key: Pubkey,
+    pub base_index: u8,
+    pub quote_index: u8,
+    pub base_delta: i64,
+    pub quote_delta: i64,
+}
+
+#[event]
 #[derive(Clone)]
 pub struct LiquidationLog {
     pub liquidation_event: LiquidationEvent,

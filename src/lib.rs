@@ -8,18 +8,26 @@ pub mod dex;
 pub mod events;
 pub use crate::types::*;
 
-// NOTE: Listed IDs are for devnet.
+#[cfg(feature = "devnet")]
+declare_id!("Zo1ThtSHMh9tZGECwBDL81WJRL6s3QTHf733Tyko7KQ");
 
-declare_id!("DuSPvazsfthvWRuJ8TUs984VXCeUfJ1qbzd8NwkRLEpd");
+#[cfg(not(feature = "devnet"))]
+declare_id!("Zo1ggzTUKMY5bYnDvT5mtVeZxzf2FaLTbKkmvGUhUQk");
 
-pub static ZO_DEX_PID: Pubkey =
-    pubkey!("CX8xiCu9uBrLX5v3DSeHX5SEvGT36PSExES2LmzVcyJd");
+pub static ZO_DEX_PID: Pubkey = match cfg!(feature = "devnet") {
+    true => pubkey!("ZDxUi178LkcuwdxcEqsSo2E7KATH99LAAXN5LcSVMBC"),
+    false => pubkey!("ZDx8a8jBqGmJyxi1whFxxCo5vG6Q9t4hTzW2GSixMKK"),
+};
 
-pub static SERUM_DEX_PID: Pubkey =
-    pubkey!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY");
+pub static SERUM_DEX_PID: Pubkey = match cfg!(feature = "devnet") {
+    true => pubkey!("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY"),
+    false => pubkey!("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"),
+};
 
-pub static ZO_STATE_ID: Pubkey =
-    pubkey!("HAdeMzG1ZuzhWnt26iyggLhYUen3YosXiD5sgDXJoNDY");
+pub static ZO_STATE_ID: Pubkey = match cfg!(feature = "devnet") {
+    true => pubkey!("KwcWW7WvgSXLJcyjKZJBHLbfriErggzYHpjS9qjVD5F"),
+    false => pubkey!("71yykwxq1zQqy99PgRsgZJXi2HHK2UDx9G4va7pH6qRv"),
+};
 
 #[program]
 mod zo_abi {
