@@ -2,7 +2,7 @@
 name = "zo-abi"
 version = "0.3.0"
 edition = "2021"
-license-file = "LICENSE"
+license = "Apache-2.0"
 readme = "README.md"
 description = "01.xyz anchor program interface"
 homepage = "https://github.com/01protocol/zo-abi"
