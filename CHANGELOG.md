@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `devnet` feature flag to switch IDs
 - BREAKING: Updated all IDs, added new `devnet` and `mainnet` instance ones
 - BREAKING: Updated structs for new instance
+- Added `FillOrKill` order type
 
 ## [0.2.0] - 2021-01-23
 
