@@ -64,6 +64,7 @@ pub enum OrderType {
     PostOnly = 2,
     ReduceOnlyIoc = 3,
     ReduceOnlyLimit = 4,
+    FillOrKill = 5,
 }
 
 #[derive(
