@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Added `FillOrKill` order type ([#4](https://github.com/01protocol/zo-abi/pull/4))
+- Added dex `Slab` deserialization
 
 ## [0.3.0] - 2021-01-26
 

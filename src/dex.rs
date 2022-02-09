@@ -27,6 +27,12 @@ pub enum EventFlag {
     ReleaseFunds = 0x10,
 }
 
+#[repr(u8)]
+pub enum Side {
+    Bid = 0,
+    Ask = 1,
+}
+
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
 pub struct ZoDexMarket {
@@ -93,6 +99,64 @@ pub struct Event {
 
 unsafe impl Zeroable for Event {}
 unsafe impl Pod for Event {}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+pub struct InnerNode {
+    pub prefix_len: u32,
+    pub key: u128,
+    pub children: [u32; 2],
+}
+
+unsafe impl Zeroable for InnerNode {}
+unsafe impl Pod for InnerNode {}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+pub struct LeafNode {
+    pub owner_slot: u8,
+    pub fee_tier: u8,
+    _pad: [u8; 2],
+    pub key: u128,
+    pub control: Pubkey,
+    pub quantity: u64,
+    pub client_order_id: u64,
+}
+
+unsafe impl Zeroable for LeafNode {}
+unsafe impl Pod for LeafNode {}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+pub struct FreeNode {
+    pub next: u32,
+}
+
+unsafe impl Zeroable for FreeNode {}
+unsafe impl Pod for FreeNode {}
+
+#[derive(Copy, Clone, Debug)]
+pub enum SlabNode {
+    Uninitialized,
+    Inner(InnerNode),
+    Leaf(LeafNode),
+    Free(FreeNode),
+    LastFree,
+}
+
+unsafe impl Zeroable for SlabNode {}
+unsafe impl Pod for SlabNode {}
+
+#[derive(Clone, Debug)]
+pub struct Slab {
+    pub account_flags: u64,
+    pub bump_index: u32,
+    pub free_list_len: u32,
+    pub free_list_head: u32,
+    pub root: u32,
+    pub leaf_count: u32,
+    pub nodes: Box<[SlabNode]>,
+}
 
 impl ZoDexMarket {
     pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
@@ -207,5 +271,102 @@ impl Event {
 
     pub fn is_maker(&self) -> bool {
         self.event_flags & (EventFlag::Maker as u8) != 0
+    }
+}
+
+impl SlabNode {
+    const SIZE: usize = size_of::<u32>() + size_of::<LeafNode>();
+
+    pub fn deserialize(buf: &[u8]) -> Result<Self, PodCastError> {
+        if buf.len() != Self::SIZE {
+            return Err(PodCastError::SizeMismatch);
+        }
+
+        let (tag, buf) = buf.split_at(size_of::<u32>());
+
+        Ok(match u32::from_le_bytes(tag.try_into().unwrap()) {
+            0 => Self::Uninitialized,
+            1 => Self::Inner(*bytemuck::try_from_bytes(
+                &buf[..size_of::<InnerNode>()],
+            )?),
+            2 => Self::Leaf(*bytemuck::try_from_bytes(
+                &buf[..size_of::<LeafNode>()],
+            )?),
+            3 => Self::Free(*bytemuck::try_from_bytes(
+                &buf[..size_of::<FreeNode>()],
+            )?),
+            4 => Self::LastFree,
+            _ => panic!("Invalid tag for slab"),
+        })
+    }
+}
+
+impl Slab {
+    pub fn deserialize(buf: &[u8]) -> Result<Self, PodCastError> {
+        #[derive(Copy, Clone)]
+        #[repr(packed)]
+        struct Header {
+            _head_pad: [u8; 5],
+            account_flags: u64,
+            bump_index: u32,
+            _pad0: [u8; 4],
+            free_list_len: u32,
+            _pad1: [u8; 4],
+            free_list_head: u32,
+            root: u32,
+            leaf_count: u32,
+            _pad2: [u8; 4],
+        }
+
+        unsafe impl Zeroable for Header {}
+        unsafe impl Pod for Header {}
+
+        if buf.len() < size_of::<Header>() {
+            return Err(PodCastError::SizeMismatch);
+        }
+
+        let (head, tail) = buf.split_at(size_of::<Header>());
+        let head: &Header = bytemuck::try_from_bytes(head)?;
+        let tail = &tail[..(tail.len() - tail.len() % SlabNode::SIZE)];
+
+        if buf[..5] != *b"serum"
+            || buf[(buf.len() - 7)..] != *b"padding"
+            || head.account_flags & AccountFlag::Initialized as u64 == 0
+            || (head.account_flags & AccountFlag::Bids as u64 != 0)
+                == (head.account_flags & AccountFlag::Asks as u64 != 0)
+        {
+            panic!("Invalid buffer for slab");
+        }
+
+        let nodes = tail
+            .chunks(SlabNode::SIZE)
+            .map(SlabNode::deserialize)
+            .filter(|x| !matches!(x, Ok(SlabNode::Uninitialized)))
+            .collect::<Result<Box<[_]>, _>>()?;
+
+        Ok(Self {
+            account_flags: head.account_flags,
+            bump_index: head.bump_index,
+            free_list_len: head.free_list_len,
+            free_list_head: head.free_list_head,
+            root: head.root,
+            leaf_count: head.leaf_count,
+            nodes,
+        })
+    }
+
+    pub fn is_bids(&self) -> bool {
+        self.account_flags & AccountFlag::Bids as u64 != 0
+    }
+
+    pub fn is_asks(&self) -> bool {
+        self.account_flags & AccountFlag::Asks as u64 != 0
+    }
+
+    pub fn side(&self) -> Side {
+        match self.is_bids() {
+            true => Side::Bid,
+            false => Side::Ask,
+        }
     }
 }
