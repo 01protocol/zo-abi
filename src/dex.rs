@@ -66,6 +66,25 @@ pub struct ZoDexMarket {
 unsafe impl Zeroable for ZoDexMarket {}
 unsafe impl Pod for ZoDexMarket {}
 
+impl ZoDexMarket {
+    pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
+        const FLAGS: u64 = (AccountFlag::Initialized as u64)
+            | (AccountFlag::Market as u64)
+            | (AccountFlag::Permissioned as u64);
+
+        let r: &Self = bytemuck::try_from_bytes(buf)?;
+
+        if r._head_pad[..] != *"serum".as_bytes()
+            || r._tail_pad[..] != *"padding".as_bytes()
+            || r.account_flags != FLAGS
+        {
+            panic!("Invalid buffer for market");
+        }
+
+        Ok(r)
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
 pub struct EventQueueHeader {
@@ -79,6 +98,21 @@ pub struct EventQueueHeader {
 
 unsafe impl Zeroable for EventQueueHeader {}
 unsafe impl Pod for EventQueueHeader {}
+
+impl EventQueueHeader {
+    pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
+        const FLAGS: u64 = (AccountFlag::Initialized as u64)
+            | (AccountFlag::EventQueue as u64);
+
+        let r: &Self = bytemuck::try_from_bytes(buf)?;
+
+        if r._head_pad[..] != *"serum".as_bytes() || r.account_flags != FLAGS {
+            panic!("Invalid buffer for event queue header");
+        }
+
+        Ok(r)
+    }
+}
 
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
@@ -99,98 +133,6 @@ pub struct Event {
 
 unsafe impl Zeroable for Event {}
 unsafe impl Pod for Event {}
-
-#[derive(Copy, Clone, Debug)]
-#[repr(packed)]
-pub struct InnerNode {
-    pub prefix_len: u32,
-    pub key: u128,
-    pub children: [u32; 2],
-}
-
-unsafe impl Zeroable for InnerNode {}
-unsafe impl Pod for InnerNode {}
-
-#[derive(Copy, Clone, Debug)]
-#[repr(packed)]
-pub struct LeafNode {
-    pub owner_slot: u8,
-    pub fee_tier: u8,
-    _pad: [u8; 2],
-    pub key: u128,
-    pub control: Pubkey,
-    pub quantity: u64,
-    pub client_order_id: u64,
-}
-
-unsafe impl Zeroable for LeafNode {}
-unsafe impl Pod for LeafNode {}
-
-#[derive(Copy, Clone, Debug)]
-#[repr(packed)]
-pub struct FreeNode {
-    pub next: u32,
-}
-
-unsafe impl Zeroable for FreeNode {}
-unsafe impl Pod for FreeNode {}
-
-#[derive(Copy, Clone, Debug)]
-pub enum SlabNode {
-    Uninitialized,
-    Inner(InnerNode),
-    Leaf(LeafNode),
-    Free(FreeNode),
-    LastFree,
-}
-
-unsafe impl Zeroable for SlabNode {}
-unsafe impl Pod for SlabNode {}
-
-#[derive(Clone, Debug)]
-pub struct Slab {
-    pub account_flags: u64,
-    pub bump_index: u32,
-    pub free_list_len: u32,
-    pub free_list_head: u32,
-    pub root: u32,
-    pub leaf_count: u32,
-    pub nodes: Box<[SlabNode]>,
-}
-
-impl ZoDexMarket {
-    pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
-        const FLAGS: u64 = (AccountFlag::Initialized as u64)
-            | (AccountFlag::Market as u64)
-            | (AccountFlag::Permissioned as u64);
-
-        let r: &Self = bytemuck::try_from_bytes(buf)?;
-
-        if r._head_pad[..] != *"serum".as_bytes()
-            || r._tail_pad[..] != *"padding".as_bytes()
-            || r.account_flags != FLAGS
-        {
-            panic!("Invalid buffer for market");
-        }
-
-        Ok(r)
-    }
-}
-
-impl EventQueueHeader {
-    pub fn deserialize(buf: &[u8]) -> Result<&Self, PodCastError> {
-        const FLAGS: u64 = (AccountFlag::Initialized as u64)
-            | (AccountFlag::EventQueue as u64);
-
-        let r: &Self = bytemuck::try_from_bytes(buf)?;
-
-        if r._head_pad[..] != *"serum".as_bytes() || r.account_flags != FLAGS {
-            panic!("Invalid buffer for event queue header");
-        }
-
-        Ok(r)
-    }
-}
 
 impl Event {
     pub fn split(
@@ -274,6 +216,53 @@ impl Event {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+pub struct InnerNode {
+    pub prefix_len: u32,
+    pub key: u128,
+    pub children: [u32; 2],
+}
+
+unsafe impl Zeroable for InnerNode {}
+unsafe impl Pod for InnerNode {}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+pub struct LeafNode {
+    pub owner_slot: u8,
+    pub fee_tier: u8,
+    _pad: [u8; 2],
+    pub key: u128,
+    pub control: Pubkey,
+    pub quantity: u64,
+    pub client_order_id: u64,
+}
+
+unsafe impl Zeroable for LeafNode {}
+unsafe impl Pod for LeafNode {}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+pub struct FreeNode {
+    pub next: u32,
+}
+
+unsafe impl Zeroable for FreeNode {}
+unsafe impl Pod for FreeNode {}
+
+#[derive(Copy, Clone, Debug)]
+pub enum SlabNode {
+    Uninitialized,
+    Inner(InnerNode),
+    Leaf(LeafNode),
+    Free(FreeNode),
+    LastFree,
+}
+
+unsafe impl Zeroable for SlabNode {}
+unsafe impl Pod for SlabNode {}
+
 impl SlabNode {
     const SIZE: usize = size_of::<u32>() + size_of::<LeafNode>();
 
@@ -299,6 +288,17 @@ impl SlabNode {
             _ => panic!("Invalid tag for slab"),
         })
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct Slab {
+    pub account_flags: u64,
+    pub bump_index: u32,
+    pub free_list_len: u32,
+    pub free_list_head: u32,
+    pub root: u32,
+    pub leaf_count: u32,
+    pub nodes: Box<[SlabNode]>,
 }
 
 impl Slab {
