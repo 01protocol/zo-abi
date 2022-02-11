@@ -1,6 +1,6 @@
 use anchor_lang::prelude::Pubkey;
 use bytemuck::{Pod, PodCastError, Zeroable};
-use std::mem::size_of;
+use std::{mem::size_of, num::NonZeroU64};
 
 #[derive(Copy, Clone, Debug)]
 #[repr(u64)]
@@ -242,6 +242,12 @@ pub struct LeafNode {
 unsafe impl Zeroable for LeafNode {}
 unsafe impl Pod for LeafNode {}
 
+impl LeafNode {
+    pub fn price(&self) -> NonZeroU64 {
+        NonZeroU64::new((self.key >> 64) as u64).unwrap()
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
 pub struct FreeNode {
@@ -292,11 +298,8 @@ impl SlabNode {
 
 #[derive(Clone, Debug)]
 pub struct Slab {
-    pub account_flags: u64,
-    pub bump_index: u32,
-    pub free_list_len: u32,
-    pub free_list_head: u32,
-    pub root: u32,
+    account_flags: u64,
+    root: u32,
     pub leaf_count: u32,
     pub nodes: Box<[SlabNode]>,
 }
@@ -308,11 +311,11 @@ impl Slab {
         struct Header {
             _head_pad: [u8; 5],
             account_flags: u64,
-            bump_index: u32,
+            _bump_index: u32,
             _pad0: [u8; 4],
-            free_list_len: u32,
+            _free_list_len: u32,
             _pad1: [u8; 4],
-            free_list_head: u32,
+            _free_list_head: u32,
             root: u32,
             leaf_count: u32,
             _pad2: [u8; 4],
@@ -346,9 +349,6 @@ impl Slab {
 
         Ok(Self {
             account_flags: head.account_flags,
-            bump_index: head.bump_index,
-            free_list_len: head.free_list_len,
-            free_list_head: head.free_list_head,
             root: head.root,
             leaf_count: head.leaf_count,
             nodes,
@@ -367,6 +367,42 @@ impl Slab {
         match self.is_bids() {
             true => Side::Bid,
             false => Side::Ask,
+        }
+    }
+
+    pub fn get(&self, idx: u32) -> Option<&SlabNode> {
+        let node = self.nodes.get(idx as usize)?;
+        match node {
+            SlabNode::Inner(_) | SlabNode::Leaf(_) => Some(node),
+            _ => None,
+        }
+    }
+
+    pub fn root(&self) -> Option<&SlabNode> {
+        match self.leaf_count > 0 {
+            true => self.get(self.root),
+            false => None,
+        }
+    }
+
+    pub fn get_min(&self) -> Option<&LeafNode> {
+        self.get_min_or_max(false)
+    }
+
+    pub fn get_max(&self) -> Option<&LeafNode> {
+        self.get_min_or_max(true)
+    }
+
+    fn get_min_or_max(&self, is_max: bool) -> Option<&LeafNode> {
+        let i = if is_max { 1 } else { 0 };
+        let mut r = self.root()?;
+
+        loop {
+            match r {
+                SlabNode::Inner(x) => r = self.get(x.children[i])?,
+                SlabNode::Leaf(x) => return Some(x),
+                _ => return None,
+            };
         }
     }
 }
