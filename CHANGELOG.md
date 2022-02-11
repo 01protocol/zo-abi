@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `FillOrKill` order type ([#4](https://github.com/01protocol/zo-abi/pull/4))
 - Added dex `Slab` deserialization and methods to find min or max price
+- BREAKING: Bumped `anchor-lang` to `v0.21.0`
 
 ## [0.3.0] - 2021-01-26
 
