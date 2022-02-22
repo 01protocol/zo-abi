@@ -156,6 +156,7 @@ pub enum PerpType {
     Future = 0,
     CallOption = 1,
     PutOption = 2,
+    Square = 3,
 }
 
 #[zero_copy]
