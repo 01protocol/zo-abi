@@ -7,6 +7,8 @@ use solana_program::pubkey;
 pub mod dex;
 pub mod events;
 pub use crate::types::*;
+pub mod errors;
+pub mod config;
 
 #[cfg(feature = "devnet")]
 declare_id!("Zo1ThtSHMh9tZGECwBDL81WJRL6s3QTHf733Tyko7KQ");
@@ -283,6 +285,7 @@ struct CreateMargin<'info> {
     pub state: AccountInfo<'info>,
     pub authority: Signer<'info>,
     // if authority is a pda, use a non-pda as payer
+    #[account(mut)]
     pub payer: Signer<'info>,
     /// Must be an uninitialized Keypair with
     /// ` seeds = [authority.key.as_ref(), state.key().as_ref(), b"marginv1".as_ref()] `
@@ -303,6 +306,7 @@ struct Deposit<'info> {
     pub state_signer: AccountInfo<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
+    #[account(mut)]
     pub authority: Signer<'info>,
     #[account(mut)]
     pub margin: AccountInfo<'info>,
@@ -323,6 +327,7 @@ struct Withdraw<'info> {
     pub state_signer: AccountInfo<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
+    #[account(mut)]
     pub authority: Signer<'info>,
     #[account(mut)]
     pub margin: AccountInfo<'info>,
