@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Square` perp type
 - Added `FillOrKill` order type ([#4](https://github.com/01protocol/zo-abi/pull/4))
 - Added dex `Slab` deserialization and methods to find min or max price
+* Added `Order` type to more easily use `Slab` leafs
 - BREAKING: Bumped `anchor-lang` to `v0.21.0`
 * BREAKING: Restricted `fixed` crate to `<=1.11`
 

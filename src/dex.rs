@@ -27,6 +27,7 @@ pub enum EventFlag {
     ReleaseFunds = 0x10,
 }
 
+#[derive(Copy, Clone, Debug)]
 #[repr(u8)]
 pub enum Side {
     Bid = 0,
@@ -82,6 +83,30 @@ impl ZoDexMarket {
         }
 
         Ok(r)
+    }
+
+    pub fn lots_to_price(self, n: u64) -> f64 {
+        let adj = 10f64.powi(self.coin_decimals as i32 - 6i32);
+        let n = n * self.pc_lot_size;
+        let (q, r) = (n / self.coin_lot_size, n % self.coin_lot_size);
+        (q as f64 + (r / self.coin_lot_size) as f64) * adj
+    }
+
+    pub fn lots_to_size(self, n: u64) -> f64 {
+        (n * self.coin_lot_size) as f64 / 10f64.powi(self.coin_decimals as i32)
+    }
+
+    pub fn parse_order(self, n: &LeafNode, side: Side) -> Order {
+        Order {
+            owner_slot: n.owner_slot,
+            fee_tier: n.fee_tier,
+            control: n.control,
+            order_id: n.key,
+            client_order_id: n.client_order_id,
+            size: self.lots_to_size(n.quantity),
+            price: self.lots_to_price((n.key >> 64) as u64),
+            side,
+        }
     }
 }
 
@@ -378,31 +403,81 @@ impl Slab {
         }
     }
 
-    pub fn root(&self) -> Option<&SlabNode> {
-        match self.leaf_count > 0 {
-            true => self.get(self.root),
-            false => None,
-        }
-    }
-
     pub fn get_min(&self) -> Option<&LeafNode> {
-        self.get_min_or_max(false)
+        self.iter_front().next()
     }
 
     pub fn get_max(&self) -> Option<&LeafNode> {
-        self.get_min_or_max(true)
+        self.iter_back().next()
     }
 
-    fn get_min_or_max(&self, is_max: bool) -> Option<&LeafNode> {
-        let i = if is_max { 1 } else { 0 };
-        let mut r = self.root()?;
+    pub fn get_best(&self) -> Option<&LeafNode> {
+        self.iter_best().next()
+    }
 
-        loop {
-            match r {
-                SlabNode::Inner(x) => r = self.get(x.children[i])?,
-                SlabNode::Leaf(x) => return Some(x),
-                _ => return None,
-            };
+    pub fn iter_front(&self) -> SlabIter<'_> {
+        SlabIter {
+            slab: self,
+            stack: if self.leaf_count > 0 {
+                vec![self.root]
+            } else {
+                vec![]
+            },
+            ascending: true,
         }
     }
+
+    pub fn iter_back(&self) -> SlabIter<'_> {
+        SlabIter {
+            slab: self,
+            stack: if self.leaf_count > 0 {
+                vec![self.root]
+            } else {
+                vec![]
+            },
+            ascending: false,
+        }
+    }
+
+    pub fn iter_best(&self) -> SlabIter<'_> {
+        match self.is_bids() {
+            true => self.iter_back(),
+            false => self.iter_front(),
+        }
+    }
+}
+
+pub struct SlabIter<'a> {
+    slab: &'a Slab,
+    stack: Vec<u32>,
+    ascending: bool,
+}
+
+impl<'a> Iterator for SlabIter<'a> {
+    type Item = &'a LeafNode;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.slab.nodes[self.stack.pop()? as usize] {
+                SlabNode::Inner(x) => self.stack.extend(if self.ascending {
+                    [x.children[1], x.children[0]]
+                } else {
+                    x.children
+                }),
+                SlabNode::Leaf(ref x) => return Some(x),
+                _ => return None,
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Order {
+    pub owner_slot: u8,
+    pub fee_tier: u8,
+    pub control: Pubkey,
+    pub order_id: u128,
+    pub client_order_id: u64,
+    pub size: f64,
+    pub price: f64,
+    pub side: Side,
 }
