@@ -85,19 +85,12 @@ mod zo_abi {
         Ok(())
     }
 
-    /// Cancels an order on the book
+    /// Cancels an order on the book, using either `order_id` and `is_long` or only `client_id`.
     pub(crate) fn cancel_perp_order(
         cx: Context<CancelPerpOrder>,
-        order_id: u128,
-        is_long: bool,
-    ) -> ProgramResult {
-        Ok(())
-    }
-
-    /// Cancels an order on the book by client id
-    pub(crate) fn cancel_perp_order_by_client_id(
-        cx: Context<CancelPerpOrderByClientId>,
-        client_id: u64,
+        order_id: Option<u128>,
+        is_long: Option<bool>,
+        client_id: Option<u64>,
     ) -> ProgramResult {
         Ok(())
     }
@@ -208,29 +201,6 @@ struct SettleFunds<'info> {
     pub open_orders: UncheckedAccount<'info>,
     #[account(mut)]
     pub dex_market: UncheckedAccount<'info>,
-    pub dex_program: UncheckedAccount<'info>,
-}
-
-#[derive(Accounts)]
-struct CancelPerpOrderByClientId<'info> {
-    pub state: AccountLoader<'info, State>,
-    #[account(mut)]
-    pub cache: AccountLoader<'info, Cache>,
-    pub authority: Signer<'info>,
-    #[account(mut)]
-    pub margin: AccountLoader<'info, Margin>,
-    #[account(mut)]
-    pub control: AccountLoader<'info, Control>,
-    #[account(mut)]
-    pub open_orders: UncheckedAccount<'info>,
-    #[account(mut)]
-    pub dex_market: UncheckedAccount<'info>,
-    #[account(mut)]
-    pub market_bids: UncheckedAccount<'info>,
-    #[account(mut)]
-    pub market_asks: UncheckedAccount<'info>,
-    #[account(mut)]
-    pub event_q: UncheckedAccount<'info>,
     pub dex_program: UncheckedAccount<'info>,
 }
 

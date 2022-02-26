@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added dex `Slab` deserialization and methods to find min or max price
 * Added `Order` type to more easily use `Slab` leafs
 * Fixed payer not being mutable on `create_margin` and `create_perp_open_orders`
+* BREAKING: Removed `cancel_perp_order_by_client_id`, instead changing `cancel_perp_order` to optionally take a `client_id` argument
 - BREAKING: Bumped `anchor-lang` to `v0.21.0`
 * BREAKING: Restricted `fixed` crate to `<=1.11`
 
