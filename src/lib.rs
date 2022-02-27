@@ -102,6 +102,14 @@ mod zo_abi {
         Ok(())
     }
 
+    /// Cancels all orders on the book
+    pub(crate) fn cancel_all_perp_orders(
+        cx: Context<CancelAllPerpOrders>,
+        limit: u16,
+    ) -> ProgramResult {
+        Ok(())
+    }
+
     /// Settles unrealized funding and realized pnl into the margin account
     pub(crate) fn settle_funds(cx: Context<SettleFunds>) -> ProgramResult {
         Ok(())
@@ -258,6 +266,33 @@ struct CancelPerpOrder<'info> {
 }
 
 #[derive(Accounts)]
+struct CancelAllPerpOrders<'info> {
+    pub authority: Signer<'info>,
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub req_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub event_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_bids: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_asks: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
 struct CreatePerpOpenOrders<'info> {
     pub state: AccountLoader<'info, State>,
     #[account(mut)]
@@ -283,6 +318,7 @@ struct CreateMargin<'info> {
     pub state: AccountInfo<'info>,
     pub authority: Signer<'info>,
     // if authority is a pda, use a non-pda as payer
+    #[account(mut)]
     pub payer: Signer<'info>,
     /// Must be an uninitialized Keypair with
     /// ` seeds = [authority.key.as_ref(), state.key().as_ref(), b"marginv1".as_ref()] `
