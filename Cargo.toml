@@ -18,7 +18,7 @@ cpi = ["no-entrypoint"]
 default = ["no-entrypoint"]
 
 [dependencies]
-anchor-lang = "0.21.0"
+anchor-lang = "0.22.1"
 solana-program = "1"
 bytemuck = "1"
 fixed = ">=1.8, <=1.11"

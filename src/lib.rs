@@ -42,7 +42,7 @@ mod zo_abi {
     pub(crate) fn create_margin(
         cx: Context<CreateMargin>,
         margin_nonce: u8,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -50,7 +50,7 @@ mod zo_abi {
         cx: Context<Deposit>,
         repay_only: bool,
         amount: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -58,7 +58,7 @@ mod zo_abi {
         cx: Context<Withdraw>,
         allow_borrow: bool,
         amount: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -67,7 +67,7 @@ mod zo_abi {
     /// Creates a trader's open orders account for a given market
     pub(crate) fn create_perp_open_orders(
         cx: Context<CreatePerpOpenOrders>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -81,7 +81,7 @@ mod zo_abi {
         order_type: OrderType,
         limit: u16,
         client_id: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -91,7 +91,7 @@ mod zo_abi {
         order_id: Option<u128>,
         is_long: Option<bool>,
         client_id: Option<u64>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -99,12 +99,12 @@ mod zo_abi {
     pub(crate) fn cancel_all_perp_orders(
         cx: Context<CancelAllPerpOrders>,
         limit: u16,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
     /// Settles unrealized funding and realized pnl into the margin account
-    pub(crate) fn settle_funds(cx: Context<SettleFunds>) -> ProgramResult {
+    pub(crate) fn settle_funds(cx: Context<SettleFunds>) -> Result<()> {
         Ok(())
     }
 
@@ -120,7 +120,7 @@ mod zo_abi {
         allow_borrow: bool, // whether the withdraw currency can go below 0
         amount: u64,        // smol amount to swap *from*
         min_rate: u64, // number of smol tokens received from a single big token given
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -128,7 +128,7 @@ mod zo_abi {
 
     pub(crate) fn update_perp_funding(
         cx: Context<UpdatePerpFunding>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -136,7 +136,7 @@ mod zo_abi {
         cx: Context<CacheOracle>,
         symbols: Vec<String>,
         mock_prices: Option<Vec<Option<u64>>>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -144,18 +144,18 @@ mod zo_abi {
         cx: Context<CacheInterestRates>,
         start: u8,
         end: u8,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
     pub(crate) fn consume_events(
         cx: Context<ConsumeEvents>,
         limit: u16,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
-    pub(crate) fn crank_pnl(cx: Context<CrankPnl>) -> ProgramResult {
+    pub(crate) fn crank_pnl(cx: Context<CrankPnl>) -> Result<()> {
         Ok(())
     }
 
@@ -165,7 +165,7 @@ mod zo_abi {
     pub(crate) fn force_cancel_all_perp_orders(
         cx: Context<ForceCancelAllPerpOrders>,
         limit: u16,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -173,7 +173,7 @@ mod zo_abi {
     pub(crate) fn liquidate_perp_position(
         cx: Context<LiquidatePerpPosition>,
         asset_transfer_lots: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
@@ -181,14 +181,14 @@ mod zo_abi {
     pub(crate) fn liquidate_spot_position(
         cx: Context<LiquidateSpotPosition>,
         asset_transfer_amount: i64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
     /// Transfer negative borrows from liqee to liqor, and subsidize through insurance fund
     pub(crate) fn settle_bankruptcy(
         cx: Context<SettleBankruptcy>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 }
@@ -292,7 +292,7 @@ struct CreateMargin<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     /// Must be an uninitialized Keypair with
-    /// ` seeds = [authority.key.as_ref(), state.key().as_ref(), b"marginv1".as_ref()] `
+    /// `seeds = [authority.key.as_ref(), state.key().as_ref(), b\"marginv1\".as_ref()]`
     #[account(mut)]
     pub margin: AccountInfo<'info>,
     /// The control account must be created as a pre-instruction, with the correct size, and with
