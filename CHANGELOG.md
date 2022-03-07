@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added `ZoDexMarket::{price_to_lots,size_to_lots}`
+
 ## [0.4.0] - 2022-03-07
 
 - Added `cancel_all_perp_orders`
