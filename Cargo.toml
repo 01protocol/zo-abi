@@ -21,4 +21,4 @@ default = ["no-entrypoint"]
 anchor-lang = "0.21.0"
 solana-program = "1"
 bytemuck = "1"
-fixed = "<=1.11"
+fixed = ">=1.8, <=1.11"
