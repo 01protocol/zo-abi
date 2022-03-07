@@ -17,13 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: Bumped `anchor-lang` to `v0.22.1`
 * BREAKING: Restricted `fixed` crate to `>=1.8, <=1.11`
 
-## [0.3.0] - 2021-01-26
+## [0.3.0] - 2022-01-26
 
 - Added `devnet` feature flag to switch IDs
 - BREAKING: Updated all IDs, added new `devnet` and `mainnet` instance ones
 - BREAKING: Updated structs for new instance
 
-## [0.2.0] - 2021-01-23
+## [0.2.0] - 2022-01-23
 
 - Added `create_perp_open_orders`, `cancel_perp_order`, `cancel_perp_order_by_client_id`, `settle_funds` instructions
 - Added `DepositLog`, `WithdrawLog` events
@@ -32,6 +32,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BREAKING: Bumped `anchor-lang` to `v0.20.1`
 - BREAKING: Renamed `dex::ID`, `serum::ID`, `state::ID` to `ZO_DEX_PID`, `SERUM_DEX_PID`, `ZO_STATE_ID`
 
-## [0.1.0] - 2021-01-10
+## [0.1.0] - 2022-01-10
 
 - Life to this repo
