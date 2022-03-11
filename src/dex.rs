@@ -96,6 +96,18 @@ impl ZoDexMarket {
         (n * self.coin_lot_size) as f64 / 10f64.powi(self.coin_decimals as i32)
     }
 
+    pub fn price_to_lots(self, n: f64) -> u64 {
+        (n * (10f64.powi(6 - self.coin_decimals as i32)
+            * self.coin_lot_size as f64
+            / self.pc_lot_size as f64))
+            .round() as u64
+    }
+
+    pub fn size_to_lots(self, n: f64) -> u64 {
+        (n * 10f64.powi(self.coin_decimals as i32)).round() as u64
+            / self.coin_lot_size
+    }
+
     pub fn parse_order(self, n: &LeafNode, side: Side) -> Order {
         Order {
             owner_slot: n.owner_slot,
