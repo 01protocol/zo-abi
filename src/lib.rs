@@ -191,6 +191,79 @@ mod zo_abi {
     ) -> Result<()> {
         Ok(())
     }
+
+    // ========== ZAMM ==========
+
+    pub(crate) fn zamm_transfer(
+        cx: Context<ZammTransfer>,
+        asset_to_transferee_lots: i64,
+        quote_to_transferee_lots: i64,
+        x_to_transferee: i64,
+        y_to_transferee: i64,
+    ) -> ProgramResult {
+        Ok(())
+    }
+
+    pub(crate) fn zamm_quote_to_collateral(
+        cx: Context<ZammQuoteToCollateral>,
+    ) -> ProgramResult {
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct ZammQuoteToCollateral<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    pub zamm: Signer<'info>,
+    #[account(mut)]
+    pub zamm_margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub zamm_control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub zamm_oo: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+}
+
+
+#[derive(Accounts)]
+pub struct ZammTransfer<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    pub zamm: Signer<'info>,
+    #[account(mut)]
+    pub zamm_margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub zamm_control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub zamm_oo: UncheckedAccount<'info>,
+    pub transferee: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub transferee_margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub transferee_control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub transferee_oo: UncheckedAccount<'info>,
+    pub x_mint: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub req_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub event_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_bids: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_asks: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
