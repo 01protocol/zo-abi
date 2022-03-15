@@ -255,10 +255,11 @@ impl Event {
 
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
-pub struct InnerNode {
-    pub prefix_len: u32,
-    pub key: u128,
+struct InnerNode {
+    _prefix_len: u32,
+    _key: u128,
     pub children: [u32; 2],
+    _pad: [u8; 40],
 }
 
 unsafe impl Zeroable for InnerNode {}
@@ -285,89 +286,65 @@ impl LeafNode {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-#[repr(packed)]
-pub struct FreeNode {
-    pub next: u32,
+enum SlabNodeRef<'a> {
+    Inner(&'a InnerNode),
+    Leaf(&'a LeafNode),
 }
 
-unsafe impl Zeroable for FreeNode {}
-unsafe impl Pod for FreeNode {}
-
 #[derive(Copy, Clone, Debug)]
-pub enum SlabNode {
-    Uninitialized,
-    Inner(InnerNode),
-    Leaf(LeafNode),
-    Free(FreeNode),
-    LastFree,
+#[repr(packed)]
+struct SlabNode {
+    tag: u32,
+    node: [u8; 68],
 }
 
 unsafe impl Zeroable for SlabNode {}
 unsafe impl Pod for SlabNode {}
 
 impl SlabNode {
-    const SIZE: usize = size_of::<u32>() + size_of::<LeafNode>();
-
-    pub fn deserialize(buf: &[u8]) -> Result<Self, PodCastError> {
-        if buf.len() != Self::SIZE {
-            return Err(PodCastError::SizeMismatch);
+    fn load(&self) -> Option<SlabNodeRef<'_>> {
+        match self.tag {
+            0 | 3 | 4 => None,
+            1 => Some(SlabNodeRef::Inner(bytemuck::from_bytes(&self.node))),
+            2 => Some(SlabNodeRef::Leaf(bytemuck::from_bytes(&self.node))),
+            i => panic!("Invalid tag {} for slab node", i),
         }
-
-        let (tag, buf) = buf.split_at(size_of::<u32>());
-
-        Ok(match u32::from_le_bytes(tag.try_into().unwrap()) {
-            0 => Self::Uninitialized,
-            1 => Self::Inner(*bytemuck::try_from_bytes(
-                &buf[..size_of::<InnerNode>()],
-            )?),
-            2 => Self::Leaf(*bytemuck::try_from_bytes(
-                &buf[..size_of::<LeafNode>()],
-            )?),
-            3 => Self::Free(*bytemuck::try_from_bytes(
-                &buf[..size_of::<FreeNode>()],
-            )?),
-            4 => Self::LastFree,
-            _ => panic!("Invalid tag for slab"),
-        })
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Slab {
+#[derive(Copy, Clone, Debug)]
+#[repr(packed)]
+struct SlabHeader {
+    _head_pad: [u8; 5],
     account_flags: u64,
+    _bump_index: u32,
+    _pad0: [u8; 4],
+    _free_list_len: u32,
+    _pad1: [u8; 4],
+    _free_list_head: u32,
     root: u32,
-    pub leaf_count: u32,
-    pub nodes: Box<[SlabNode]>,
+    leaf_count: u32,
+    _pad2: [u8; 4],
 }
 
-impl Slab {
-    pub fn deserialize(buf: &[u8]) -> Result<Self, PodCastError> {
-        #[derive(Copy, Clone)]
-        #[repr(packed)]
-        struct Header {
-            _head_pad: [u8; 5],
-            account_flags: u64,
-            _bump_index: u32,
-            _pad0: [u8; 4],
-            _free_list_len: u32,
-            _pad1: [u8; 4],
-            _free_list_head: u32,
-            root: u32,
-            leaf_count: u32,
-            _pad2: [u8; 4],
-        }
+unsafe impl Zeroable for SlabHeader {}
+unsafe impl Pod for SlabHeader {}
 
-        unsafe impl Zeroable for Header {}
-        unsafe impl Pod for Header {}
+#[derive(Clone, Debug)]
+pub struct Slab<'a> {
+    head: &'a SlabHeader,
+    nodes: &'a [SlabNode],
+}
 
-        if buf.len() < size_of::<Header>() {
+impl<'a> Slab<'a> {
+    pub fn deserialize(buf: &'a [u8]) -> Result<Slab<'a>, PodCastError> {
+        if buf.len() < size_of::<SlabHeader>() {
             return Err(PodCastError::SizeMismatch);
         }
 
-        let (head, tail) = buf.split_at(size_of::<Header>());
-        let head: &Header = bytemuck::try_from_bytes(head)?;
-        let tail = &tail[..(tail.len() - tail.len() % SlabNode::SIZE)];
+        let (head, tail) = buf.split_at(size_of::<SlabHeader>());
+        let head: &SlabHeader = bytemuck::try_from_bytes(head)?;
+        let tail = &tail[..(tail.len() - tail.len() % size_of::<SlabNode>())];
 
         if buf[..5] != *b"serum"
             || buf[(buf.len() - 7)..] != *b"padding"
@@ -378,40 +355,24 @@ impl Slab {
             panic!("Invalid buffer for slab");
         }
 
-        let nodes = tail
-            .chunks(SlabNode::SIZE)
-            .map(SlabNode::deserialize)
-            .filter(|x| !matches!(x, Ok(SlabNode::Uninitialized)))
-            .collect::<Result<Box<[_]>, _>>()?;
-
         Ok(Self {
-            account_flags: head.account_flags,
-            root: head.root,
-            leaf_count: head.leaf_count,
-            nodes,
+            head,
+            nodes: bytemuck::try_cast_slice(tail)?,
         })
     }
 
     pub fn is_bids(&self) -> bool {
-        self.account_flags & AccountFlag::Bids as u64 != 0
+        self.head.account_flags & AccountFlag::Bids as u64 != 0
     }
 
     pub fn is_asks(&self) -> bool {
-        self.account_flags & AccountFlag::Asks as u64 != 0
+        self.head.account_flags & AccountFlag::Asks as u64 != 0
     }
 
     pub fn side(&self) -> Side {
         match self.is_bids() {
             true => Side::Bid,
             false => Side::Ask,
-        }
-    }
-
-    pub fn get(&self, idx: u32) -> Option<&SlabNode> {
-        let node = self.nodes.get(idx as usize)?;
-        match node {
-            SlabNode::Inner(_) | SlabNode::Leaf(_) => Some(node),
-            _ => None,
         }
     }
 
@@ -427,11 +388,11 @@ impl Slab {
         self.iter_best().next()
     }
 
-    pub fn iter_front(&self) -> SlabIter<'_> {
+    pub fn iter_front(&self) -> SlabIter<'_, '_> {
         SlabIter {
             slab: self,
-            stack: if self.leaf_count > 0 {
-                vec![self.root]
+            stack: if self.head.leaf_count > 0 {
+                vec![self.head.root]
             } else {
                 vec![]
             },
@@ -439,11 +400,11 @@ impl Slab {
         }
     }
 
-    pub fn iter_back(&self) -> SlabIter<'_> {
+    pub fn iter_back(&self) -> SlabIter<'_, '_> {
         SlabIter {
             slab: self,
-            stack: if self.leaf_count > 0 {
-                vec![self.root]
+            stack: if self.head.leaf_count > 0 {
+                vec![self.head.root]
             } else {
                 vec![]
             },
@@ -451,7 +412,7 @@ impl Slab {
         }
     }
 
-    pub fn iter_best(&self) -> SlabIter<'_> {
+    pub fn iter_best(&self) -> SlabIter<'_, '_> {
         match self.is_bids() {
             true => self.iter_back(),
             false => self.iter_front(),
@@ -459,24 +420,23 @@ impl Slab {
     }
 }
 
-pub struct SlabIter<'a> {
-    slab: &'a Slab,
+pub struct SlabIter<'a, 'b: 'a> {
+    slab: &'a Slab<'b>,
     stack: Vec<u32>,
     ascending: bool,
 }
 
-impl<'a> Iterator for SlabIter<'a> {
+impl<'a, 'b: 'a> Iterator for SlabIter<'a, 'b> {
     type Item = &'a LeafNode;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.slab.nodes[self.stack.pop()? as usize] {
-                SlabNode::Inner(x) => self.stack.extend(if self.ascending {
+            match self.slab.nodes[self.stack.pop()? as usize].load()? {
+                SlabNodeRef::Inner(x) => self.stack.extend(if self.ascending {
                     [x.children[1], x.children[0]]
                 } else {
                     x.children
                 }),
-                SlabNode::Leaf(ref x) => return Some(x),
-                _ => return None,
+                SlabNodeRef::Leaf(x) => return Some(x),
             }
         }
     }
