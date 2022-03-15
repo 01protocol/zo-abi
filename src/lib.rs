@@ -85,6 +85,18 @@ mod zo_abi {
         Ok(())
     }
 
+    pub(crate) fn place_multiple_orders(
+        cx: Context<PlaceMultiplePerpOrder>,
+        is_long: Vec<bool>,
+        limit_price: Vec<u64>,
+        max_base_quantity: Vec<u64>,
+        max_quote_quantity: Vec<u64>,
+        limit: u16,
+        client_id: Vec<u64>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     /// Cancels an order on the book, using either `order_id` and `is_long` or only `client_id`.
     pub(crate) fn cancel_perp_order(
         cx: Context<CancelPerpOrder>,
@@ -200,15 +212,44 @@ mod zo_abi {
         quote_to_transferee_lots: i64,
         x_to_transferee: i64,
         y_to_transferee: i64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
 
     pub(crate) fn zamm_quote_to_collateral(
         cx: Context<ZammQuoteToCollateral>,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         Ok(())
     }
+}
+
+/// Only callable by ZAMM.
+#[derive(Accounts)]
+pub struct PlaceMultiplePerpOrder<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub req_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub event_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_bids: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_asks: UncheckedAccount<'info>,
+    pub dex_program: UncheckedAccount<'info>,
+    pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
