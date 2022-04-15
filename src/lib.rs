@@ -55,7 +55,7 @@ pub fn taker_rate(perp_type: PerpType, fee_tier: FeeTier) -> u16 {
 }
 
 /// Returns maker rate x/100_000
-pub fn maker_rate(perp_type: PerpType, fee_tier: FeeTier) -> u16 {
+pub fn maker_rate(_perp_type: PerpType, _fee_tier: FeeTier) -> u16 {
     0u16
 }
 

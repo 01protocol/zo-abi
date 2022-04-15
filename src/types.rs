@@ -151,7 +151,7 @@ pub struct PerpMarketInfo {
     _padding: [u8; 320],
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum PerpType {
     Future = 0,
     CallOption = 1,
