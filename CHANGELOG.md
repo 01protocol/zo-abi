@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add `taker_rate` and `maker_rate` fn getters
 - Add `place_perp_order_lite`
 - Add `ZoDexMarket::{price_to_lots,size_to_lots}`
 - BREAKING: Refactor `dex::Slab` to avoid copying the buffer, so it can be used in programs
