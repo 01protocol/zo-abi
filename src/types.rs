@@ -278,3 +278,14 @@ pub struct Control {
     /// Mapped to `State.perp_markets`
     pub open_orders_agg: [OpenOrdersInfo; MAX_MARKETS],
 }
+
+#[derive(Copy, Clone)]
+pub enum FeeTier {
+    Base,
+    ZO2,
+    ZO3,
+    ZO4,
+    ZO5,
+    ZO6,
+    MSRM,
+}
