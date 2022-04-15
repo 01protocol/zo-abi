@@ -86,6 +86,7 @@ mod zo_abi {
     }
 
     /// Places a new order (lite version uses less compute, does not settle funds automatically)
+    /// Currently only available on devnet
     pub(crate) fn place_perp_order_lite(
         cx: Context<PlacePerpOrder>,
         is_long: bool,
