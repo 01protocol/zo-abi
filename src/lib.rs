@@ -85,6 +85,21 @@ mod zo_abi {
         Ok(())
     }
 
+    /// Places a new order (lite version uses less compute, does not settle funds automatically)
+    /// Currently only available on devnet
+    pub(crate) fn place_perp_order_lite(
+        cx: Context<PlacePerpOrder>,
+        is_long: bool,
+        limit_price: u64,
+        max_base_quantity: u64,
+        max_quote_quantity: u64,
+        order_type: OrderType,
+        limit: u16,
+        client_id: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     /// Cancels an order on the book, using either `order_id` and `is_long` or only `client_id`.
     pub(crate) fn cancel_perp_order(
         cx: Context<CancelPerpOrder>,
