@@ -34,6 +34,36 @@ impl Symbol {
     }
 }
 
+impl<'a> TryFrom<&'a str> for Symbol {
+    type Error = ParseSymbolError;
+    fn try_from(x: &'a str) -> std::result::Result<Self, Self::Error> {
+        if x.len() > 24 {
+            Err(Self::Error {})
+        } else {
+            let mut data = [0u8; 24];
+            data[0..x.len()].copy_from_slice(x.as_bytes());
+            Ok(Self { data })
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ParseSymbolError {}
+
+impl TryFrom<&String> for Symbol {
+    type Error = ParseSymbolError;
+    fn try_from(x: &String) -> std::result::Result<Self, Self::Error> {
+        Symbol::try_from(x.as_str())
+    }
+}
+
+impl TryFrom<String> for Symbol {
+    type Error = ParseSymbolError;
+    fn try_from(x: String) -> std::result::Result<Self, Self::Error> {
+        Symbol::try_from(x.as_str())
+    }
+}
+
 impl From<Symbol> for String {
     fn from(sym: Symbol) -> String {
         String::from(&sym)
