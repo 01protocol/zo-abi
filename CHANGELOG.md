@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `ZoDexMarket::{price_to_lots,size_to_lots}`
 - Add `From<String>` for `Symbol`
 - BREAKING: Refactor `dex::Slab` to avoid copying the buffer, so it can be used in programs
+- Add: Upgrade anchor to `0.24.2` (from `0.21.1`)
 
 ## [0.4.0] - 2022-03-07
 
@@ -19,10 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `Square` perp type
 - Added `FillOrKill` order type ([#4](https://github.com/01protocol/zo-abi/pull/4))
 - Added dex `Slab` deserialization and methods to find min or max price
+
 * Added `Order` type to more easily use `Slab` leafs
-* Fixed payer not being mutable on `create_margin` and `create_perp_open_orders`
-* BREAKING: Removed `cancel_perp_order_by_client_id`, instead changing `cancel_perp_order` to optionally take a `client_id` argument
+- Fixed payer not being mutable on `create_margin` and `create_perp_open_orders`
+- BREAKING: Removed `cancel_perp_order_by_client_id`, instead changing `cancel_perp_order` to optionally take a `client_id` argument
+
 - BREAKING: Bumped `anchor-lang` to `v0.22.1`
+
 * BREAKING: Restricted `fixed` crate to `>=1.8, <=1.11`
 
 ## [0.3.0] - 2022-01-26
