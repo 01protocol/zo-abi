@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `ZoDexMarket::{price_to_lots,size_to_lots}`
 - Add `From<String>` for `Symbol`
 - BREAKING: Refactor `dex::Slab` to avoid copying the buffer, so it can be used in programs
-- Add: Upgrade anchor to `0.24.2` (from `0.21.1`)
+- BREAKING: Upgrade anchor to `0.24.2` (from `0.21.1`)
 
 ## [0.4.0] - 2022-03-07
 
