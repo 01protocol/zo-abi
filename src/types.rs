@@ -312,10 +312,10 @@ pub struct Control {
 #[derive(Copy, Clone)]
 pub enum FeeTier {
     Base,
-    ZO2,
-    ZO3,
-    ZO4,
-    ZO5,
-    ZO6,
-    MSRM,
+    Zo2,
+    Zo3,
+    Zo4,
+    Zo5,
+    Zo6,
+    Msrm,
 }

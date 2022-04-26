@@ -1,12 +1,14 @@
 #![doc = include_str!("../README.md")]
 
 mod types;
+mod util;
 use anchor_lang::prelude::*;
 use solana_program::pubkey;
 
 pub mod dex;
 pub mod events;
 pub use crate::types::*;
+pub use crate::util::*;
 
 #[cfg(feature = "devnet")]
 declare_id!("Zo1ThtSHMh9tZGECwBDL81WJRL6s3QTHf733Tyko7KQ");
@@ -28,36 +30,6 @@ pub static ZO_STATE_ID: Pubkey = match cfg!(feature = "devnet") {
     true => pubkey!("KwcWW7WvgSXLJcyjKZJBHLbfriErggzYHpjS9qjVD5F"),
     false => pubkey!("71yykwxq1zQqy99PgRsgZJXi2HHK2UDx9G4va7pH6qRv"),
 };
-
-/// Returns taker rate x/100_000
-pub fn taker_rate(perp_type: PerpType, fee_tier: FeeTier) -> u16 {
-    if perp_type == PerpType::Square {
-        match fee_tier {
-            FeeTier::Base => 200,
-            FeeTier::ZO2 => 190,
-            FeeTier::ZO3 => 180,
-            FeeTier::ZO4 => 170,
-            FeeTier::ZO5 => 160,
-            FeeTier::ZO6 => 150,
-            FeeTier::MSRM => 100,
-        }
-    } else {
-        match fee_tier {
-            FeeTier::Base => 100,
-            FeeTier::ZO2 => 90,
-            FeeTier::ZO3 => 80,
-            FeeTier::ZO4 => 70,
-            FeeTier::ZO5 => 60,
-            FeeTier::ZO6 => 50,
-            FeeTier::MSRM => 42,
-        }
-    }
-}
-
-/// Returns maker rate x/100_000
-pub fn maker_rate(_perp_type: PerpType, _fee_tier: FeeTier) -> u16 {
-    0u16
-}
 
 #[program]
 mod zo_abi {
