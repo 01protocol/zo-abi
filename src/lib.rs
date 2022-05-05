@@ -377,13 +377,16 @@ struct UpdatePerpFunding<'info> {
     pub dex_program: AccountInfo<'info>,
 }
 
-/// Price info accounts are passed in remaining
-/// accounts array.
+/// Price info accounts are passed in remaining accounts array,
+/// followed by the relevant dex market accounts.
 #[derive(Accounts)]
 struct CacheOracle<'info> {
     pub signer: Signer<'info>,
+    pub state: AccountInfo<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
+    #[account(address = ZO_DEX_PID)]
+    pub dex_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
