@@ -89,7 +89,7 @@ impl ZoDexMarket {
         let adj = 10f64.powi(self.coin_decimals as i32 - 6i32);
         let n = n * self.pc_lot_size;
         let (q, r) = (n / self.coin_lot_size, n % self.coin_lot_size);
-        (q as f64 + (r / self.coin_lot_size) as f64) * adj
+        (q as f64 + (r as f64 / self.coin_lot_size as f64)) * adj
     }
 
     pub fn lots_to_size(self, n: u64) -> f64 {
