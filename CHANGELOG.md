@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add `place_perp_order_with_max_ts`
 - Fix precision loss in `ZoDexMarket::lots_to_price`
 - BREAKING: Change accounts passed to `cache_oracle`
 

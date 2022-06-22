@@ -87,6 +87,22 @@ mod zo_abi {
         Ok(())
     }
 
+    /// Places a new order with max timestamp. If current on-chain timestamp exceeds
+    /// max timestamp, then order will not go through
+    pub(crate) fn place_perp_order_with_max_ts(
+        cx: Context<PlacePerpOrder>,
+        is_long: bool,
+        limit_price: u64,
+        max_base_quantity: u64,
+        max_quote_quantity: u64,
+        order_type: OrderType,
+        limit: u16,
+        client_id: u64,
+        max_ts: i64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
     /// Places a new order (lite version uses less compute, does not settle funds automatically)
     /// Currently only available on devnet
     pub(crate) fn place_perp_order_lite(
