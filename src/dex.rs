@@ -314,7 +314,7 @@ impl SlabNode {
 
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]
-struct SlabHeader {
+pub struct SlabHeader {
     _head_pad: [u8; 5],
     account_flags: u64,
     _bump_index: u32,
@@ -323,7 +323,7 @@ struct SlabHeader {
     _pad1: [u8; 4],
     _free_list_head: u32,
     root: u32,
-    leaf_count: u32,
+    pub leaf_count: u32,
     _pad2: [u8; 4],
 }
 
@@ -332,7 +332,7 @@ unsafe impl Pod for SlabHeader {}
 
 #[derive(Clone, Debug)]
 pub struct Slab<'a> {
-    head: &'a SlabHeader,
+    pub head: &'a SlabHeader,
     nodes: &'a [SlabNode],
 }
 
