@@ -34,6 +34,36 @@ impl Symbol {
     }
 }
 
+impl<'a> TryFrom<&'a str> for Symbol {
+    type Error = ParseSymbolError;
+    fn try_from(x: &'a str) -> std::result::Result<Self, Self::Error> {
+        if x.len() > 24 {
+            Err(Self::Error {})
+        } else {
+            let mut data = [0u8; 24];
+            data[0..x.len()].copy_from_slice(x.as_bytes());
+            Ok(Self { data })
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ParseSymbolError {}
+
+impl TryFrom<&String> for Symbol {
+    type Error = ParseSymbolError;
+    fn try_from(x: &String) -> std::result::Result<Self, Self::Error> {
+        Symbol::try_from(x.as_str())
+    }
+}
+
+impl TryFrom<String> for Symbol {
+    type Error = ParseSymbolError;
+    fn try_from(x: String) -> std::result::Result<Self, Self::Error> {
+        Symbol::try_from(x.as_str())
+    }
+}
+
 impl From<Symbol> for String {
     fn from(sym: Symbol) -> String {
         String::from(&sym)
@@ -151,7 +181,7 @@ pub struct PerpMarketInfo {
     _padding: [u8; 320],
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum PerpType {
     Future = 0,
     CallOption = 1,
@@ -277,4 +307,15 @@ pub struct Control {
     pub authority: Pubkey,
     /// Mapped to `State.perp_markets`
     pub open_orders_agg: [OpenOrdersInfo; MAX_MARKETS],
+}
+
+#[derive(Copy, Clone)]
+pub enum FeeTier {
+    Base,
+    Zo2,
+    Zo3,
+    Zo4,
+    Zo5,
+    Zo6,
+    Msrm,
 }

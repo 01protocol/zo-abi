@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add `place_perp_order_with_max_ts`
+- Fix precision loss in `ZoDexMarket::lots_to_price`
+- BREAKING: Change accounts passed to `cache_oracle`
+
+## [0.5.0] - 2022-04-25
+
+- Add `taker_rate` and `maker_rate` functions
+- Add `place_perp_order_lite`
 - Add `ZoDexMarket::{price_to_lots,size_to_lots}`
+- Add `From<String>` for `Symbol`
 - BREAKING: Refactor `dex::Slab` to avoid copying the buffer, so it can be used in programs
+- BREAKING: Upgrade anchor to `0.24.2` (from `0.22.1`)
 
 ## [0.4.0] - 2022-03-07
 

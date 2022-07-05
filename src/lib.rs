@@ -1,12 +1,14 @@
 #![doc = include_str!("../README.md")]
 
 mod types;
+mod util;
 use anchor_lang::prelude::*;
 use solana_program::pubkey;
 
 pub mod dex;
 pub mod events;
 pub use crate::types::*;
+pub use crate::util::*;
 
 #[cfg(feature = "devnet")]
 declare_id!("Zo1ThtSHMh9tZGECwBDL81WJRL6s3QTHf733Tyko7KQ");
@@ -73,6 +75,37 @@ mod zo_abi {
 
     /// Places a new order
     pub(crate) fn place_perp_order(
+        cx: Context<PlacePerpOrder>,
+        is_long: bool,
+        limit_price: u64,
+        max_base_quantity: u64,
+        max_quote_quantity: u64,
+        order_type: OrderType,
+        limit: u16,
+        client_id: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Places a new order with max timestamp. If current on-chain timestamp exceeds
+    /// max timestamp, then order will not go through
+    pub(crate) fn place_perp_order_with_max_ts(
+        cx: Context<PlacePerpOrder>,
+        is_long: bool,
+        limit_price: u64,
+        max_base_quantity: u64,
+        max_quote_quantity: u64,
+        order_type: OrderType,
+        limit: u16,
+        client_id: u64,
+        max_ts: i64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    /// Places a new order (lite version uses less compute, does not settle funds automatically)
+    /// Currently only available on devnet
+    pub(crate) fn place_perp_order_lite(
         cx: Context<PlacePerpOrder>,
         is_long: bool,
         limit_price: u64,
@@ -474,13 +507,16 @@ struct UpdatePerpFunding<'info> {
     pub dex_program: AccountInfo<'info>,
 }
 
-/// Price info accounts are passed in remaining
-/// accounts array.
+/// Price info accounts are passed in remaining accounts array,
+/// followed by the relevant dex market accounts.
 #[derive(Accounts)]
 struct CacheOracle<'info> {
     pub signer: Signer<'info>,
+    pub state: AccountInfo<'info>,
     #[account(mut)]
     pub cache: AccountInfo<'info>,
+    #[account(address = ZO_DEX_PID)]
+    pub dex_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]

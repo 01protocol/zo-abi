@@ -1,6 +1,6 @@
 [package]
 name = "zo-abi"
-version = "0.4.0"
+version = "0.6.0-beta.1"
 edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
@@ -18,7 +18,7 @@ cpi = ["no-entrypoint"]
 default = ["no-entrypoint"]
 
 [dependencies]
-anchor-lang = "0.22.1"
+anchor-lang = "0.24.2"
 solana-program = "1"
 bytemuck = "1"
 fixed = ">=1.8, <=1.11"
