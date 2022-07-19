@@ -245,6 +245,7 @@ mod zo_abi {
         quote_to_transferee_lots: i64,
         x_to_transferee: i64,
         y_to_transferee: i64,
+        is_otc: bool,
     ) -> Result<()> {
         Ok(())
     }
