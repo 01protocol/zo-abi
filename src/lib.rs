@@ -308,6 +308,7 @@ pub struct ZammQuoteToCollateral<'info> {
 
 #[derive(Accounts)]
 pub struct ZammTransfer<'info> {
+    #[account(mut)]
     pub state: AccountLoader<'info, State>,
     #[account(mut)]
     pub cache: AccountLoader<'info, Cache>,
