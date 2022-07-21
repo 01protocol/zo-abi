@@ -74,3 +74,25 @@ pub struct RealizedPnlLog {
     pub qty_paid: i64,
     pub qty_received: i64,
 }
+
+#[event]
+pub struct EventFillLog {
+    pub is_long: bool,
+    pub is_maker: bool,
+    pub market_key: Pubkey,
+    pub margin: Pubkey,
+    pub control: Pubkey,
+    pub qty_paid: u64,
+    pub qty_received: u64,
+    pub fee_or_rebate: u64,
+    pub discriminator: u16,
+}
+
+#[event]
+pub struct OtcFill {
+    pub market: Pubkey,
+    pub taker_margin: Pubkey,
+    pub maker_margin: Pubkey,
+    pub d_base: i64,  // taker's d_base
+    pub d_quote: i64, // taker's d_quote
+}
