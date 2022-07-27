@@ -13,6 +13,7 @@ pub const DUST_THRESHOLD: i64 = 1_000;
 pub const MAX_COLLATERALS: usize = 25;
 pub const MAX_MARKETS: usize = 50;
 pub const MAX_ORACLE_SOURCES: usize = 3;
+pub const MAX_SPECIAL_ORDERS: usize = 20;
 
 #[derive(
     AnchorDeserialize,
@@ -141,15 +142,15 @@ pub struct CollateralInfo {
     pub mint: Pubkey,
     pub oracle_symbol: Symbol,
     pub decimals: u8,
-    pub weight: u16, //  in permil
+    pub weight: u16,  //  in permil
     pub liq_fee: u16, // in permil
 
     // borrow lending info
     pub is_borrowable: bool,
     pub optimal_util: u16, // in permil
     pub optimal_rate: u16, // in permil
-    pub max_rate: u16, // in permil
-    pub og_fee: u16, // in bps
+    pub max_rate: u16,     // in permil
+    pub og_fee: u16,       // in bps
 
     // swap info
     pub is_swappable: bool,
@@ -178,9 +179,9 @@ pub struct PerpMarketInfo {
     pub asset_decimals: u8,
     pub asset_lot_size: u64,
     pub quote_lot_size: u64,
-    pub strike: u64, // in smolUSD per bigAsset
+    pub strike: u64,   // in smolUSD per bigAsset
     pub base_imf: u16, // in permil (i.e. 1% <=> 10 permil)
-    pub liq_fee: u16, // in permil
+    pub liq_fee: u16,  // in permil
     // zoDex dex keys
     pub dex_market: Pubkey,
 
@@ -256,8 +257,8 @@ pub struct TwapInfo {
 #[zero_copy]
 #[repr(packed)]
 pub struct BorrowCache {
-    pub supply: WrappedI80F48, // in smol
-    pub borrows: WrappedI80F48, // in smol
+    pub supply: WrappedI80F48,            // in smol
+    pub borrows: WrappedI80F48,           // in smol
     pub supply_multiplier: WrappedI80F48, // earned interest per asset supplied
     pub borrow_multiplier: WrappedI80F48, // earned interest per asset borrowed
     pub last_updated: u64,
@@ -307,12 +308,84 @@ pub struct Cache {
     pub borrow_cache: [BorrowCache; MAX_COLLATERALS],
 }
 
+impl Cache {
+    pub fn get_oracle(&self, s: &Symbol) -> Option<&OracleCache> {
+        if s.is_nil() {
+            return None;
+        }
+
+        (&self.oracles)
+            .binary_search_by_key(s, |x| x.symbol)
+            .map(|i| &self.oracles[i])
+            .ok()
+    }
+}
+
 #[account(zero_copy)]
 #[repr(packed)]
 pub struct Control {
     pub authority: Pubkey,
     /// Mapped to `State.perp_markets`
     pub open_orders_agg: [OpenOrdersInfo; MAX_MARKETS],
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum SpecialOrderType {
+    TakeProfit,
+    StopLoss,
+}
+
+#[zero_copy]
+#[repr(packed)]
+pub struct SpecialOrdersInfo {
+    pub id: u16,
+    pub market: Pubkey,
+    pub ty: SpecialOrderType,
+    pub is_long: bool,
+    /// In smol per big.
+    pub trigger_price: u64,
+    /// In smol per big.
+    pub limit_price: u64,
+    /// In lots.
+    pub size: u64,
+    pub fee: u64,
+}
+
+impl SpecialOrdersInfo {
+    pub fn is_nil(&self) -> bool {
+        self.id == 0
+    }
+
+    pub fn is_triggered(&self, current_price: u64) -> bool {
+        self.trigger_price == current_price
+            || self.is_long
+                == match self.ty {
+                    SpecialOrderType::TakeProfit => {
+                        self.trigger_price < current_price
+                    }
+                    SpecialOrderType::StopLoss => {
+                        self.trigger_price > current_price
+                    }
+                }
+    }
+}
+
+#[account(zero_copy)]
+#[repr(packed)]
+pub struct SpecialOrders {
+    pub nonce: u8,
+    pub authority: Pubkey,
+    /// `id` of the previously added entry.
+    pub prev_id: u16,
+    pub entries: [SpecialOrdersInfo; MAX_SPECIAL_ORDERS],
+    _padding: [u8; 128],
+}
+
+impl SpecialOrders {
+    pub fn iter(&self) -> impl Iterator<Item = &SpecialOrdersInfo> {
+        self.entries.iter().filter(|x| !x.is_nil())
+    }
 }
 
 #[derive(Copy, Clone)]

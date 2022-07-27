@@ -229,6 +229,39 @@ mod zo_abi {
     ) -> Result<()> {
         Ok(())
     }
+
+    // ========== SPECIAL ==========
+
+    pub fn create_special_orders_account(
+        cx: Context<CreateSpecialOrdersAccount>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub(crate) fn place_special_order(
+        cx: Context<PlaceSpecialOrder>,
+        is_long: bool,
+        special_order_type: SpecialOrderType,
+        trigger_price: u64,
+        limit_price: u64,
+        size: u64,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub(crate) fn cancel_special_order(
+        cx: Context<CancelSpecialOrder>,
+        id: u16,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub(crate) fn execute_special_order(
+        cx: Context<ExecuteSpecialOrder>,
+        id: u16,
+    ) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -622,4 +655,72 @@ struct Swap<'info> {
     pub srm_spot_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
     pub rent: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CreateSpecialOrdersAccount<'info> {
+    pub state: AccountLoader<'info, State>,
+    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    /// `seeds = [authority.key.as_ref(), state.key().as_ref(), b\"sordersv1\".as_ref()]`
+    #[account(mut)]
+    pub special_orders: AccountLoader<'info, SpecialOrders>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct PlaceSpecialOrder<'info> {
+    pub state: AccountLoader<'info, State>,
+    pub authority: Signer<'info>,
+    /// `seeds = [authority.key.as_ref(), state.key().as_ref(), b\"sordersv1\".as_ref()]`
+    #[account(mut)]
+    pub special_orders: AccountLoader<'info, SpecialOrders>,
+    pub dex_market: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CancelSpecialOrder<'info> {
+    pub state: AccountLoader<'info, State>,
+    pub authority: Signer<'info>,
+    /// `seeds = [authority.key.as_ref(), state.key().as_ref(), b\"sordersv1\".as_ref()]`
+    #[account(mut)]
+    pub special_orders: AccountLoader<'info, SpecialOrders>,
+    pub dex_market: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ExecuteSpecialOrder<'info> {
+    pub state: AccountLoader<'info, State>,
+    #[account(mut)]
+    pub state_signer: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub cache: AccountLoader<'info, Cache>,
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    pub authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub margin: AccountLoader<'info, Margin>,
+    #[account(mut)]
+    pub control: AccountLoader<'info, Control>,
+    /// `seeds = [authority.key.as_ref(), state.key().as_ref(), b\"sordersv1\".as_ref()]`
+    #[account(mut)]
+    pub special_orders: AccountLoader<'info, SpecialOrders>,
+    #[account(mut)]
+    pub open_orders: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub dex_market: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub req_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub event_q: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_bids: UncheckedAccount<'info>,
+    #[account(mut)]
+    pub market_asks: UncheckedAccount<'info>,
+    #[account(address = ZO_DEX_PID)]
+    pub dex_program: UncheckedAccount<'info>,
+    pub rent: Sysvar<'info, Rent>,
 }
