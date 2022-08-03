@@ -80,6 +80,12 @@ impl From<&Symbol> for String {
     }
 }
 
+impl std::fmt::Display for Symbol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&String::from(self))
+    }
+}
+
 #[derive(PartialEq, Copy, Clone)]
 pub enum FractionType {
     Maintenance,
