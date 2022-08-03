@@ -8,7 +8,7 @@ pub const SPOT_INITIAL_MARGIN_REQ: u64 = 1_100_000;
 pub const SPOT_MAINT_MARGIN_REQ: u64 = 1_030_000;
 
 /// In microUSD.
-pub const DUST_THRESHOLD: i64 = 1_000_000;
+pub const DUST_THRESHOLD: i64 = 1_000;
 
 pub const MAX_COLLATERALS: usize = 25;
 pub const MAX_MARKETS: usize = 50;
