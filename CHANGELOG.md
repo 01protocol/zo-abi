@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix precision loss in `ZoDexMarket::lots_to_price`
 - Add `EventFillLog` and `OtcFill` events
 - BREAKING: Change accounts passed to `cache_oracle`
+- BREAKING: Change accounts passed to `withdraw`
 - BREAKING: Bump `anchor-lang` to `v0.25.0`
 
 ## [0.5.0] - 2022-04-25

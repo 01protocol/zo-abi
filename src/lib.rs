@@ -31,6 +31,11 @@ pub static ZO_STATE_ID: Pubkey = match cfg!(feature = "devnet") {
     false => pubkey!("71yykwxq1zQqy99PgRsgZJXi2HHK2UDx9G4va7pH6qRv"),
 };
 
+pub static ZO_HEIMDALL_ID: Pubkey = match cfg!(feature = "devnet") {
+    true => pubkey!("Aoi3SGj4zLiMQSHrJ4yEDFwMQnGjVQCeKSYD6ygi6WLr"),
+    false => pubkey!("Cyvjas5Hg6nb6RNsuCi8sK3kcjbWzTgdJcHxmSYS8mkY"),
+};
+
 #[program]
 mod zo_abi {
     #![allow(dead_code)]
@@ -374,6 +379,10 @@ struct Withdraw<'info> {
     #[account(mut)]
     pub vault: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
+    /// This should be `zo_abi::ZO_HEIMDALL_ID`. Alternatively,
+    /// you can generated the PDA with `seeds = [b\"heimdallv1\".as_ref()]`.
+    #[account(mut)]
+    pub heimdall: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
