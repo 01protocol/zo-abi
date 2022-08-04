@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2022-08-03
+
 - Add `place_perp_order_with_max_ts`
 - Fix precision loss in `ZoDexMarket::lots_to_price`
 - Add `EventFillLog` and `OtcFill` events

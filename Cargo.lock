@@ -1413,7 +1413,7 @@ checksum = "4756f7db3f7b5574938c3eb1c117038b8e07f95ee6718c0efad4ac21508f1efd"
 
 [[package]]
 name = "zo-abi"
-version = "0.6.0-beta.1"
+version = "0.6.0"
 dependencies = [
  "anchor-lang",
  "bytemuck",
