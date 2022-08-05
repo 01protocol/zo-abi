@@ -342,6 +342,7 @@ pub struct SpecialOrdersInfo {
     pub id: u16,
     pub market: Pubkey,
     pub ty: SpecialOrderType,
+    /// Side of the order that gets placed.
     pub is_long: bool,
     /// In smol per big.
     pub trigger_price: u64,
@@ -358,9 +359,12 @@ impl SpecialOrdersInfo {
     }
 
     pub fn is_triggered(&self, current_price: u64) -> bool {
+        // If the triggered order is short, then it must be to close
+        // a long. So take profit checks if the mark price is higher
+        // than the trigger price, and vice versa.
         self.trigger_price == current_price
             || self.is_long
-                == match self.ty {
+                != match self.ty {
                     SpecialOrderType::TakeProfit => {
                         self.trigger_price < current_price
                     }
