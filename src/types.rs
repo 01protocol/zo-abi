@@ -332,8 +332,10 @@ pub struct Control {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum SpecialOrderType {
-    TakeProfit,
-    StopLoss,
+    TakeProfitMarket,
+    TakeProfitLimit,
+    StopLossMarket,
+    StopLossLimit,
 }
 
 #[zero_copy]
@@ -359,16 +361,18 @@ impl SpecialOrdersInfo {
     }
 
     pub fn is_triggered(&self, current_price: u64) -> bool {
+        use SpecialOrderType::*;
+
         // If the triggered order is short, then it must be to close
         // a long. So take profit checks if the mark price is higher
         // than the trigger price, and vice versa.
         self.trigger_price == current_price
             || self.is_long
                 != match self.ty {
-                    SpecialOrderType::TakeProfit => {
+                    TakeProfitMarket | TakeProfitLimit => {
                         self.trigger_price < current_price
                     }
-                    SpecialOrderType::StopLoss => {
+                    StopLossMarket | StopLossLimit => {
                         self.trigger_price > current_price
                     }
                 }
